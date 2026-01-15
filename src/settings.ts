@@ -15,6 +15,8 @@ export interface HexoIntegrationSettings {
     pathMapping: Record<string, string>;
     autoExcerpt: boolean;
     serverPort: number;
+    compressImages: boolean;
+    webpQuality: number;
 }
 
 export const DEFAULT_SETTINGS: HexoIntegrationSettings = {
@@ -30,7 +32,9 @@ export const DEFAULT_SETTINGS: HexoIntegrationSettings = {
     showOutputModal: true,
     pathMapping: {},
     autoExcerpt: false,
-    serverPort: 4000
+    serverPort: 4000,
+    compressImages: false,
+    webpQuality: 75
 }
 
 export class HexoIntegrationSettingTab extends PluginSettingTab {
@@ -130,6 +134,33 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                     }
                 }));
+
+        containerEl.createEl('h3', { text: 'Image Optimization' });
+
+        new Setting(containerEl)
+            .setName('Compress Images')
+            .setDesc('Automatically convert and compress images to WebP format when publishing.')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.compressImages)
+                .onChange(async (value) => {
+                    this.plugin.settings.compressImages = value;
+                    await this.plugin.saveSettings();
+                    this.display(); // Refresh to show/hide quality setting
+                }));
+
+        if (this.plugin.settings.compressImages) {
+            new Setting(containerEl)
+                .setName('WebP Quality')
+                .setDesc('Compression quality for WebP (0-100).')
+                .addSlider(slider => slider
+                    .setLimits(0, 100, 5)
+                    .setValue(this.plugin.settings.webpQuality)
+                    .setDynamicTooltip()
+                    .onChange(async (value) => {
+                        this.plugin.settings.webpQuality = value;
+                        await this.plugin.saveSettings();
+                    }));
+        }
 
         if (this.plugin.settings.slugStyle === 'translate') {
             containerEl.createEl('h3', { text: 'Baidu Translate Settings' });

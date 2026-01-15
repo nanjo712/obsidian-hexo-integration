@@ -18,8 +18,8 @@ export class ImageService {
             const linkedFile = this.app.metadataCache.getFirstLinkpathDest(embed.link, file.path);
 
             if (linkedFile && ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(linkedFile.extension.toLowerCase())) {
-                // 1. Copy image (only once per file name)
-                await this.ensureImageCopied(linkedFile, assetDir, processedFiles);
+                // 1. Copy image (and compress if enabled)
+                const finalFilename = await this.ensureImageCopied(linkedFile, assetDir, processedFiles);
 
                 // 2. Dynamically replace this specific link pattern to handle unique Alt texts
                 const escapedLink = embed.link.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -29,8 +29,8 @@ export class ImageService {
                 updatedContent = updatedContent.replace(wikiRegex, (match, p1, altText) => {
                     const finalAlt = altText || "";
                     return this.settings.imageSyntax === 'markdown'
-                        ? `![${finalAlt}](${linkedFile.name})`
-                        : `{% asset_img ${linkedFile.name} ${finalAlt} %}`;
+                        ? `![${finalAlt}](${finalFilename})`
+                        : `{% asset_img ${finalFilename} ${finalAlt} %}`;
                 });
 
                 // Handle Markdown links: ![alt](image.png)
@@ -38,8 +38,8 @@ export class ImageService {
                 updatedContent = updatedContent.replace(mdRegex, (match, altText) => {
                     const finalAlt = altText || "";
                     return this.settings.imageSyntax === 'markdown'
-                        ? `![${finalAlt}](${linkedFile.name})`
-                        : `{% asset_img ${linkedFile.name} ${finalAlt} %}`;
+                        ? `![${finalAlt}](${finalFilename})`
+                        : `{% asset_img ${finalFilename} ${finalAlt} %}`;
                 });
             }
         }
@@ -56,19 +56,70 @@ export class ImageService {
         if (linkedFile && ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(linkedFile.extension.toLowerCase())) {
             const assetDir = this.getAssetFolderPath(file);
             if (!assetDir) return null;
-            await this.ensureImageCopied(linkedFile, assetDir, processedFiles);
-            return linkedFile.name;
+            const finalFilename = await this.ensureImageCopied(linkedFile, assetDir, processedFiles);
+            return finalFilename;
         }
         return null;
     }
 
-    private async ensureImageCopied(linkedFile: TFile, assetDir: string, processedFiles: Set<string>) {
-        if (!processedFiles.has(linkedFile.name)) {
-            if (!fs.existsSync(assetDir)) fs.mkdirSync(assetDir, { recursive: true });
-            const imageContent = await this.app.vault.readBinary(linkedFile);
-            fs.writeFileSync(pathNode.join(assetDir, linkedFile.name), Buffer.from(imageContent));
-            processedFiles.add(linkedFile.name);
+    private async ensureImageCopied(linkedFile: TFile, assetDir: string, processedFiles: Set<string>): Promise<string> {
+        let finalName = linkedFile.name;
+        if (this.settings.compressImages) {
+            finalName = pathNode.parse(linkedFile.name).name + '.webp';
         }
+
+        if (!processedFiles.has(finalName)) {
+            if (!fs.existsSync(assetDir)) fs.mkdirSync(assetDir, { recursive: true });
+            const targetPath = pathNode.join(assetDir, finalName);
+
+            if (this.settings.compressImages) {
+                const buffer = await this.app.vault.readBinary(linkedFile);
+                const compressed = await this.compressToWebP(buffer, this.settings.webpQuality / 100);
+                fs.writeFileSync(targetPath, Buffer.from(compressed));
+            } else {
+                const imageContent = await this.app.vault.readBinary(linkedFile);
+                fs.writeFileSync(targetPath, Buffer.from(imageContent));
+            }
+            processedFiles.add(finalName);
+        }
+        return finalName;
+    }
+
+    private async compressToWebP(buffer: ArrayBuffer, quality: number): Promise<ArrayBuffer> {
+        return new Promise((resolve, reject) => {
+            const blob = new Blob([buffer]);
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    URL.revokeObjectURL(url);
+                    reject(new Error('Failed to get canvas context'));
+                    return;
+                }
+
+                ctx.drawImage(img, 0, 0);
+                canvas.toBlob((resultBlob) => {
+                    URL.revokeObjectURL(url);
+                    if (resultBlob) {
+                        resultBlob.arrayBuffer().then(resolve).catch(reject);
+                    } else {
+                        reject(new Error('Failed to compress image to WebP'));
+                    }
+                }, 'image/webp', quality);
+            };
+
+            img.onerror = (err) => {
+                URL.revokeObjectURL(url);
+                reject(err);
+            };
+
+            img.src = url;
+        });
     }
 
     getAssetFolderPath(file: TFile): string | null {

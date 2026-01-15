@@ -5,6 +5,7 @@ export const HEXO_VIEW_TYPE = "hexo-management-view";
 
 export class HexoManagementView extends ItemView {
     plugin: HexoIntegration;
+    private isRendering = false;
 
     constructor(leaf: WorkspaceLeaf, plugin: HexoIntegration) {
         super(leaf);
@@ -38,35 +39,42 @@ export class HexoManagementView extends ItemView {
     }
 
     async render() {
-        const { contentEl } = this;
-        contentEl.empty();
+        if (this.isRendering) return;
+        this.isRendering = true;
 
-        const header = contentEl.createDiv({ cls: "hexo-view-header" });
-        header.createEl("h4", { text: "Hexo Dashboard" });
+        try {
+            const { contentEl } = this;
+            contentEl.empty();
 
-        const actions = contentEl.createDiv({ cls: "hexo-view-actions" });
+            const header = contentEl.createDiv({ cls: "hexo-view-header" });
+            header.createEl("h4", { text: "Hexo Dashboard" });
 
-        const posts = await this.getPostsByStatus();
-        const pendingCount = posts.unpublished.length + posts.unsynced.length;
+            const actions = contentEl.createDiv({ cls: "hexo-view-actions" });
 
-        const bulkPublishBtn = actions.createEl("button", {
-            text: `Bulk Publish (${pendingCount})`,
-            cls: "mod-cta"
-        });
-        setIcon(bulkPublishBtn, "zap");
-        bulkPublishBtn.disabled = pendingCount === 0;
-        bulkPublishBtn.onclick = () => this.bulkPublish([...posts.unsynced, ...posts.unpublished]);
+            const posts = await this.getPostsByStatus();
+            const pendingCount = posts.drafts.length + posts.unsynced.length;
 
-        const refreshBtn = actions.createEl("button", { text: "Refresh" });
-        setIcon(refreshBtn, "refresh-cw");
-        refreshBtn.onclick = () => this.render();
+            const bulkPublishBtn = actions.createEl("button", {
+                text: `Bulked Publish (${pendingCount})`,
+                cls: "mod-cta"
+            });
+            setIcon(bulkPublishBtn, "zap");
+            bulkPublishBtn.disabled = pendingCount === 0;
+            bulkPublishBtn.onclick = () => this.bulkPublish([...posts.unsynced, ...posts.drafts]);
 
-        if (posts.unsynced.length === 0 && posts.unpublished.length === 0 && posts.published.length === 0) {
-            this.renderEmptyState(contentEl);
-        } else {
-            this.renderSection("Unsynced (Modified)", posts.unsynced, "modified", false);
-            this.renderSection("Unpublished", posts.unpublished, "new", false);
-            this.renderSection("Published", posts.published, "published", true);
+            const refreshBtn = actions.createEl("button", { text: "Refresh" });
+            setIcon(refreshBtn, "refresh-cw");
+            refreshBtn.onclick = () => this.render();
+
+            if (posts.unsynced.length === 0 && posts.drafts.length === 0 && posts.published.length === 0) {
+                this.renderEmptyState(contentEl);
+            } else {
+                this.renderSection("Unsynced (Modified)", posts.unsynced, "modified", false);
+                this.renderSection("Drafts", posts.drafts, "new", false);
+                this.renderSection("Published", posts.published, "published", true);
+            }
+        } finally {
+            this.isRendering = false;
         }
     }
 
@@ -79,7 +87,7 @@ export class HexoManagementView extends ItemView {
 
     async getPostsByStatus() {
         const unsynced: TFile[] = [];
-        const unpublished: TFile[] = [];
+        const drafts: TFile[] = [];
         const published: TFile[] = [];
 
         const files = this.app.vault.getMarkdownFiles();
@@ -87,11 +95,11 @@ export class HexoManagementView extends ItemView {
             if (this.plugin.syncService.isHexoFormat(file)) {
                 const status = await this.plugin.syncService.getSyncStatus(file);
                 if (status === 'unsynced') unsynced.push(file);
-                else if (status === 'unpublished') unpublished.push(file);
+                else if (status === 'unpublished') drafts.push(file);
                 else if (status === 'published') published.push(file);
             }
         }
-        return { unsynced, unpublished, published };
+        return { unsynced, drafts, published };
     }
 
     renderSection(title: string, files: TFile[], type: 'modified' | 'new' | 'published', isFolded: boolean) {
@@ -126,7 +134,7 @@ export class HexoManagementView extends ItemView {
             };
 
             const badge = cardHeader.createSpan({
-                text: type === 'modified' ? 'Modified' : (type === 'new' ? 'New' : 'Published'),
+                text: type === 'modified' ? 'Modified' : (type === 'new' ? 'Draft' : 'Published'),
                 cls: `hexo-status-badge ${type}`
             });
 

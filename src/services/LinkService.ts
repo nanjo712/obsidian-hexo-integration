@@ -26,7 +26,7 @@ export class LinkService {
                 const cache = this.app.metadataCache.getFileCache(targetFile);
                 const frontmatter = cache?.frontmatter;
 
-                const isPublished = frontmatter && frontmatter.publish === true;
+                const isPublished = frontmatter && frontmatter.published === true;
 
                 if (isPublished) {
                     const displayTitle = alias || targetFile.basename;

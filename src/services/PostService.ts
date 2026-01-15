@@ -23,7 +23,7 @@ title:
 slug: 
 date: ${this.getFormattedDate()}
 tags: 
-publish: false
+published: false
 ---
 
 # 
@@ -51,7 +51,7 @@ publish: false
             if (!frontmatter.permalink) frontmatter.permalink = generatedPermalink;
             if (!frontmatter.date) frontmatter.date = this.getFormattedDate();
             if (!frontmatter.tags) frontmatter.tags = [];
-            if (frontmatter.publish === undefined) frontmatter.publish = false;
+            if (frontmatter.published === undefined) frontmatter.published = false;
         });
         new Notice(`Converted ${file.name} to Hexo format.`);
     }
@@ -66,13 +66,13 @@ publish: false
         let frontmatter = cache?.frontmatter;
 
 
-        const isHexoFormat = frontmatter && 'title' in frontmatter && 'date' in frontmatter && 'tags' in frontmatter && 'publish' in frontmatter;
+        const isHexoFormat = frontmatter && 'title' in frontmatter && 'date' in frontmatter && 'tags' in frontmatter && 'published' in frontmatter;
         if (!isHexoFormat) {
             await this.convertToHexo(file);
         }
 
         await this.app.fileManager.processFrontMatter(file, (fm) => {
-            fm.publish = true;
+            fm.published = true;
         });
 
         try {

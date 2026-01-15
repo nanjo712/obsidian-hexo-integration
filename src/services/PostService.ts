@@ -4,6 +4,7 @@ import { PermalinkService } from './PermalinkService';
 import { SyncService } from './SyncService';
 import { ImageService } from './ImageService';
 import { LinkService } from './LinkService';
+import { FilenameService } from './FilenameService';
 import * as fs from 'fs';
 import * as pathNode from 'path';
 
@@ -14,7 +15,8 @@ export class PostService {
         private permalinkService: PermalinkService,
         private syncService: SyncService,
         private imageService: ImageService,
-        private linkService: LinkService
+        private linkService: LinkService,
+        private filenameService: FilenameService
     ) { }
 
     async createHexoPost() {
@@ -102,14 +104,61 @@ published: false
             content = await this.imageService.processImages(file, content, processedFiles);
             content = await this.linkService.transformLinks(content, file);
 
-            fs.writeFileSync(pathNode.join(targetDir, file.name), content);
-            new Notice(`Published ${file.name} to Hexo blog.`);
+            // Determine target Hexo filename
+            let hexoFileName = this.settings.pathMapping[file.path];
+            if (!hexoFileName) {
+                const sanitized = this.filenameService.sanitize(file.name);
+                hexoFileName = this.filenameService.getUniqueFilename(targetDir, sanitized);
+                this.settings.pathMapping[file.path] = hexoFileName;
+            }
+
+            fs.writeFileSync(pathNode.join(targetDir, hexoFileName), content);
+            new Notice(`Published ${file.name} to Hexo as ${hexoFileName}.`);
 
             this.settings.postHashes[file.path] = await this.syncService.computeHash(originalContent);
             await onComplete();
         } catch (error: any) {
             console.error(error);
             new Notice(`Error publishing: ${error.message}`);
+        }
+    }
+
+    async syncRename(file: TFile, oldPath: string) {
+        if (!this.settings.hexoRoot) return;
+
+        const oldHash = this.settings.postHashes[oldPath];
+        const oldHexoFileName = this.settings.pathMapping[oldPath];
+
+        if (!oldHash || !oldHexoFileName) {
+            // If it wasn't published, clear stale entries if they exist
+            delete this.settings.postHashes[oldPath];
+            delete this.settings.pathMapping[oldPath];
+            return;
+        }
+
+        try {
+            const postsDir = pathNode.join(this.settings.hexoRoot, 'source', '_posts');
+            const oldHexoPath = pathNode.join(postsDir, oldHexoFileName);
+
+            // Generate new sanitized filename
+            const sanitized = this.filenameService.sanitize(file.name);
+            const newHexoFileName = this.filenameService.getUniqueFilename(postsDir, sanitized);
+            const newHexoPath = pathNode.join(postsDir, newHexoFileName);
+
+            if (fs.existsSync(oldHexoPath)) {
+                fs.renameSync(oldHexoPath, newHexoPath);
+                new Notice(`Renamed Hexo post to ${newHexoFileName}`);
+            }
+
+            // Update mapping and hashes
+            this.settings.pathMapping[file.path] = newHexoFileName;
+            this.settings.postHashes[file.path] = oldHash;
+
+            delete this.settings.postHashes[oldPath];
+            delete this.settings.pathMapping[oldPath];
+        } catch (error: any) {
+            console.error('Hexo Integration: Rename sync failed', error);
+            new Notice(`Failed to rename Hexo post: ${error.message}`);
         }
     }
 }

@@ -6,6 +6,7 @@ import { SyncService } from './services/SyncService';
 import { ImageService } from './services/ImageService';
 import { PostService } from './services/PostService';
 import { LinkService } from './services/LinkService';
+import { FilenameService } from './services/FilenameService';
 import { FileWatcherService } from './services/FileWatcherService';
 import { HexoManagementView, HEXO_VIEW_TYPE } from './views/HexoManagementView';
 
@@ -18,6 +19,7 @@ export default class HexoIntegration extends Plugin {
     syncService: SyncService;
     imageService: ImageService;
     postService: PostService;
+    filenameService: FilenameService;
     fileWatcherService: FileWatcherService;
 
     async onload() {
@@ -28,8 +30,9 @@ export default class HexoIntegration extends Plugin {
         this.hexoService = new HexoService(this.app, this.settings);
         this.syncService = new SyncService(this.app, this.settings);
         this.imageService = new ImageService(this.app, this.settings);
+        this.filenameService = new FilenameService(this.app);
         const linkService = new LinkService(this.app);
-        this.postService = new PostService(this.app, this.settings, this.permalinkService, this.syncService, this.imageService, linkService);
+        this.postService = new PostService(this.app, this.settings, this.permalinkService, this.syncService, this.imageService, linkService, this.filenameService);
         this.fileWatcherService = new FileWatcherService(this.app, this.settings, () => this.updateStatusBar());
 
         // Register custom Hexo icon
@@ -136,7 +139,13 @@ export default class HexoIntegration extends Plugin {
                 this.updateStatusBar();
             }
         }));
-        this.registerEvent(this.app.vault.on('rename', () => this.updateStatusBar()));
+        this.registerEvent(this.app.vault.on('rename', async (file, oldPath) => {
+            if (file instanceof TFile) {
+                await this.postService.syncRename(file, oldPath);
+                await this.saveSettings();
+                this.updateStatusBar();
+            }
+        }));
         this.registerEvent(this.app.vault.on('delete', () => this.updateStatusBar()));
 
         this.updateStatusBar();

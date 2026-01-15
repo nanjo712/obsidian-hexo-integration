@@ -9,8 +9,8 @@ export class ImageService {
     async processImages(file: TFile, content: string, processedFiles: Set<string> = new Set()): Promise<string> {
         const cache = this.app.metadataCache.getFileCache(file);
         const embeds = cache?.embeds || [];
-        const targetDir = pathNode.join(this.settings.hexoRoot, 'source', '_posts');
-        const assetDir = pathNode.join(targetDir, file.basename);
+        const assetDir = this.getAssetFolderPath(file);
+        if (!assetDir) return content;
 
         let updatedContent = content;
 
@@ -54,8 +54,8 @@ export class ImageService {
         const linkedFile = this.app.metadataCache.getFirstLinkpathDest(cleanLink, file.path);
 
         if (linkedFile && ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(linkedFile.extension.toLowerCase())) {
-            const targetDir = pathNode.join(this.settings.hexoRoot, 'source', '_posts');
-            const assetDir = pathNode.join(targetDir, file.basename);
+            const assetDir = this.getAssetFolderPath(file);
+            if (!assetDir) return null;
             await this.ensureImageCopied(linkedFile, assetDir, processedFiles);
             return linkedFile.name;
         }
@@ -69,5 +69,49 @@ export class ImageService {
             fs.writeFileSync(pathNode.join(assetDir, linkedFile.name), Buffer.from(imageContent));
             processedFiles.add(linkedFile.name);
         }
+    }
+
+    getAssetFolderPath(file: TFile): string | null {
+        if (!this.settings.hexoRoot) return null;
+        const hexoFileName = this.settings.pathMapping[file.path];
+        if (!hexoFileName) return null;
+
+        const postsDir = pathNode.join(this.settings.hexoRoot, 'source', '_posts');
+        const assetFolderName = pathNode.parse(hexoFileName).name;
+        return pathNode.join(postsDir, assetFolderName);
+    }
+
+    async getUnusedImages(file: TFile): Promise<string[]> {
+        const assetDir = this.getAssetFolderPath(file);
+        if (!assetDir || !fs.existsSync(assetDir)) return [];
+
+        const filesInAssetDir = fs.readdirSync(assetDir);
+        const usedImages = new Set<string>();
+
+        // 1. Check content for used images
+        let content = await this.app.vault.read(file);
+        const cache = this.app.metadataCache.getFileCache(file);
+        const embeds = cache?.embeds || [];
+
+        for (const embed of embeds) {
+            const linkedFile = this.app.metadataCache.getFirstLinkpathDest(embed.link, file.path);
+            if (linkedFile && ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(linkedFile.extension.toLowerCase())) {
+                usedImages.add(linkedFile.name);
+            }
+        }
+
+        // 2. Check frontmatter for cover image
+        const frontmatter = cache?.frontmatter;
+        const coverField = this.settings.coverFieldName || 'cover';
+        if (frontmatter && frontmatter[coverField]) {
+            const coverLink = String(frontmatter[coverField]);
+            const cleanLink = (coverLink.replace(/^"?\[\[|\]\]"?$/g, '').split('|')[0] ?? '').trim();
+            const linkedFile = this.app.metadataCache.getFirstLinkpathDest(cleanLink, file.path);
+            if (linkedFile && ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(linkedFile.extension.toLowerCase())) {
+                usedImages.add(linkedFile.name);
+            }
+        }
+
+        return filesInAssetDir.filter(f => !usedImages.has(f) && ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(pathNode.extname(f).slice(1).toLowerCase()));
     }
 }

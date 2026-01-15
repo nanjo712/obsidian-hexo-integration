@@ -7,6 +7,7 @@ import { LinkService } from './LinkService';
 import { FilenameService } from './FilenameService';
 import * as fs from 'fs';
 import * as pathNode from 'path';
+import { AssetCleanupModal, UnusedAsset } from '../modals/AssetCleanupModal';
 
 export class PostService {
     constructor(
@@ -22,7 +23,7 @@ export class PostService {
     async createHexoPost() {
         const template = `---
 title: 
-slug: 
+permalink: 
 date: ${this.getFormattedDate()}
 tags: 
 published: false
@@ -44,6 +45,45 @@ published: false
         const minutes = String(now.getMinutes()).padStart(2, '0');
         const seconds = String(now.getSeconds()).padStart(2, '0');
         return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+
+    private applyAutoExcerpt(content: string): string {
+        // Find end of frontmatter
+        const firstSep = content.indexOf('---');
+        if (firstSep === -1) return content;
+        const secondSep = content.indexOf('---', firstSep + 3);
+        if (secondSep === -1) return content;
+
+        const frontmatter = content.substring(0, secondSep + 3);
+        const body = content.substring(secondSep + 3);
+
+        const lines = body.split('\n');
+        let firstContentLineIndex = -1;
+        let endOfFirstParagraphIndex = -1;
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            if (line === undefined) continue;
+            const trimmedLine = line.trim();
+            if (trimmedLine.length > 0 && !trimmedLine.startsWith('#')) {
+                if (firstContentLineIndex === -1) {
+                    firstContentLineIndex = i;
+                }
+            } else if (firstContentLineIndex !== -1 && trimmedLine.length === 0) {
+                endOfFirstParagraphIndex = i;
+                break;
+            }
+        }
+
+        if (endOfFirstParagraphIndex !== -1) {
+            lines.splice(endOfFirstParagraphIndex, 0, '<!--more-->');
+            return frontmatter + lines.join('\n');
+        } else if (firstContentLineIndex !== -1) {
+            // Only one paragraph
+            return frontmatter + body.trimEnd() + '\n\n<!--more-->\n';
+        }
+
+        return content;
     }
 
     async convertToHexo(file: TFile) {
@@ -104,6 +144,10 @@ published: false
             content = await this.imageService.processImages(file, content, processedFiles);
             content = await this.linkService.transformLinks(content, file);
 
+            if (this.settings.autoExcerpt && !/<!--\s*more\s*-->/.test(content)) {
+                content = this.applyAutoExcerpt(content);
+            }
+
             // Determine target Hexo filename
             let hexoFileName = this.settings.pathMapping[file.path];
             if (!hexoFileName) {
@@ -160,5 +204,62 @@ published: false
             console.error('Hexo Integration: Rename sync failed', error);
             new Notice(`Failed to rename Hexo post: ${error.message}`);
         }
+    }
+
+    async cleanAssets(file: TFile) {
+        if (!this.syncService.isHexoFormat(file)) {
+            new Notice('File is not in Hexo format.');
+            return;
+        }
+
+        const unused = await this.imageService.getUnusedImages(file);
+        const assetDir = this.imageService.getAssetFolderPath(file);
+
+        if (unused.length === 0 || !assetDir) {
+            new Notice(`No unused images found for ${file.basename}.`);
+            return;
+        }
+
+        const items: UnusedAsset[] = unused.map(name => ({
+            fileName: name,
+            filePath: pathNode.join(assetDir, name),
+            noteTitle: file.basename
+        }));
+
+        new AssetCleanupModal(this.app, items, async () => {
+            items.forEach(item => fs.unlinkSync(item.filePath));
+            new Notice(`Deleted ${items.length} unused images for ${file.basename}.`);
+        }).open();
+    }
+
+    async cleanAllAssets() {
+        const files = this.app.vault.getMarkdownFiles();
+        let allUnused: UnusedAsset[] = [];
+
+        new Notice('Scanning for unused assets...');
+
+        for (const file of files) {
+            if (this.syncService.isHexoFormat(file)) {
+                const unused = await this.imageService.getUnusedImages(file);
+                const assetDir = this.imageService.getAssetFolderPath(file);
+                if (assetDir && unused.length > 0) {
+                    allUnused = allUnused.concat(unused.map(name => ({
+                        fileName: name,
+                        filePath: pathNode.join(assetDir, name),
+                        noteTitle: file.basename
+                    })));
+                }
+            }
+        }
+
+        if (allUnused.length === 0) {
+            new Notice('No unused images found across all posts.');
+            return;
+        }
+
+        new AssetCleanupModal(this.app, allUnused, async () => {
+            allUnused.forEach(item => fs.unlinkSync(item.filePath));
+            new Notice(`Cleanup completed: ${allUnused.length} images deleted.`);
+        }).open();
     }
 }

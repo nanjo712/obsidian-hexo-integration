@@ -50,7 +50,7 @@ export default class HexoIntegration extends Plugin {
         });
 
         // Start File Watcher
-        this.fileWatcherService.start();
+        await this.fileWatcherService.start();
 
         this.addRibbonIcon('hexo-logo', 'Hexo Integration', (evt: MouseEvent) => {
             new HexoCommandModal(this.app, this).open();

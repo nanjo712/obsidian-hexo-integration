@@ -99,7 +99,21 @@ publish: false
             let content = await this.app.vault.read(file);
             const originalContent = content;
 
-            content = await this.imageService.processImages(file, content);
+            const processedFiles = new Set<string>();
+
+            // Handle cover image
+            const coverField = this.settings.coverFieldName || 'cover';
+            if (frontmatter && frontmatter[coverField]) {
+                const coverValue = frontmatter[coverField];
+                const newCoverValue = await this.imageService.handleCoverImage(file, String(coverValue), processedFiles);
+                if (newCoverValue) {
+                    // Update only the published content's frontmatter (non-destructive to original file)
+                    const coverRegex = new RegExp(`^${coverField}:.*$`, 'm');
+                    content = content.replace(coverRegex, `${coverField}: ${newCoverValue}`);
+                }
+            }
+
+            content = await this.imageService.processImages(file, content, processedFiles);
 
             fs.writeFileSync(pathNode.join(targetDir, file.name), content);
             new Notice(`Published ${file.name} to Hexo blog.`);

@@ -18,7 +18,8 @@ A powerful Obsidian plugin that streamlines the process of publishing specialize
   - **Smart Formatting**: Option to remove stop words (a, the, in, etc.) and truncate slugs to a specific word count (available for Title and Translate modes).
 - **Smart Image Handling**:
   - Automatically copies embedded images to post-specific asset folders.
-  - **Flexible Syntax**: Choose between Hexo's specific `{% asset_img ... %}` tags or native Markdown `![]()` syntax for better compatibility with other Markdown editors.
+  - **Cover Image Support**: Detects cover images in frontmatter, copies them to the asset folder, and transforms the reference for Hexo.
+  - **Flexible Syntax**: Choose between Hexo's specific `{% asset_img ... %}` tags or native Markdown `![]()` syntax.
 - **Persistent Sync Tracking (Dirty Check)**:
   - Uses an internal, invisible hash-based system to track if your notes are in sync with your blog.
   - No messy timestamps in your frontmatter.
@@ -49,7 +50,8 @@ A powerful Obsidian plugin that streamlines the process of publishing specialize
 5. **Image Syntax**:
     - **Hexo Tag**: Uses `{% asset_img %}` (best for Hexo features like better image scaling).
     - **Native Markdown**: Uses standard `![]()` (best for cross-editor preview compatibility).
-6. (Optional) Customize hotkeys via the Obsidian Hotkeys settings.
+6. **Cover Field Name**: Customize the frontmatter field used for the post cover (default: `cover`).
+7. (Optional) Customize hotkeys via the Obsidian Hotkeys settings.
 
 ## 📖 How to Use
 

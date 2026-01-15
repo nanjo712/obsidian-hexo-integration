@@ -6,7 +6,7 @@ import * as pathNode from 'path';
 export class ImageService {
     constructor(private app: App, private settings: HexoIntegrationSettings) { }
 
-    async processImages(file: TFile, content: string): Promise<string> {
+    async processImages(file: TFile, content: string, processedFiles: Set<string> = new Set()): Promise<string> {
         const cache = this.app.metadataCache.getFileCache(file);
         const embeds = cache?.embeds || [];
         const targetDir = pathNode.join(this.settings.hexoRoot, 'source', '_posts');
@@ -18,37 +18,56 @@ export class ImageService {
             const linkedFile = this.app.metadataCache.getFirstLinkpathDest(embed.link, file.path);
 
             if (linkedFile && ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(linkedFile.extension.toLowerCase())) {
-                // Create asset folder if it doesn't exist
-                if (!fs.existsSync(assetDir)) {
-                    fs.mkdirSync(assetDir, { recursive: true });
-                }
+                // 1. Copy image (only once per file name)
+                await this.ensureImageCopied(linkedFile, assetDir, processedFiles);
 
-                // Copy image
-                const imageContent = await this.app.vault.readBinary(linkedFile);
-                fs.writeFileSync(pathNode.join(assetDir, linkedFile.name), Buffer.from(imageContent));
+                // 2. Dynamically replace this specific link pattern to handle unique Alt texts
+                const escapedLink = embed.link.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-                // Replace syntax in content
-                const altText = embed.displayText !== linkedFile.name ? embed.displayText : '';
-                let replacement = "";
-                if (this.settings.imageSyntax === 'markdown') {
-                    replacement = `![${altText}](${linkedFile.name})`;
-                } else {
-                    replacement = `{% asset_img ${linkedFile.name} ${altText} %}`;
-                }
-
-                const wikiRegex = new RegExp(`!\\[\\[${embed.link.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\|.*?)?\\]\\]`, 'g');
-                updatedContent = updatedContent.replace(wikiRegex, replacement);
-
-                const mdRegex = new RegExp(`!\\[(.*?)\\]\\(${embed.link.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)`, 'g');
-                updatedContent = updatedContent.replace(mdRegex, (match, alt) => {
-                    const currentAlt = alt || altText;
+                // Handle Wikilinks: ![[image.png|alt]]
+                const wikiRegex = new RegExp(`!\\[\\[${escapedLink}(\\|(.*?))?\\]\\]`, 'g');
+                updatedContent = updatedContent.replace(wikiRegex, (match, p1, altText) => {
+                    const finalAlt = altText || "";
                     return this.settings.imageSyntax === 'markdown'
-                        ? `![${currentAlt}](${linkedFile.name})`
-                        : `{% asset_img ${linkedFile.name} ${currentAlt} %}`;
+                        ? `![${finalAlt}](${linkedFile.name})`
+                        : `{% asset_img ${linkedFile.name} ${finalAlt} %}`;
+                });
+
+                // Handle Markdown links: ![alt](image.png)
+                const mdRegex = new RegExp(`!\\[(.*?)\\]\\(${escapedLink}\\)`, 'g');
+                updatedContent = updatedContent.replace(mdRegex, (match, altText) => {
+                    const finalAlt = altText || "";
+                    return this.settings.imageSyntax === 'markdown'
+                        ? `![${finalAlt}](${linkedFile.name})`
+                        : `{% asset_img ${linkedFile.name} ${finalAlt} %}`;
                 });
             }
         }
 
         return updatedContent;
+    }
+
+    async handleCoverImage(file: TFile, coverLink: string, processedFiles: Set<string>): Promise<string | null> {
+        if (!coverLink) return null;
+        // Strip ![[ ]] and other junk if present
+        const cleanLink = (coverLink.replace(/^"?\[\[|\]\]"?$/g, '').split('|')[0] ?? '').trim();
+        const linkedFile = this.app.metadataCache.getFirstLinkpathDest(cleanLink, file.path);
+
+        if (linkedFile && ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(linkedFile.extension.toLowerCase())) {
+            const targetDir = pathNode.join(this.settings.hexoRoot, 'source', '_posts');
+            const assetDir = pathNode.join(targetDir, file.basename);
+            await this.ensureImageCopied(linkedFile, assetDir, processedFiles);
+            return linkedFile.name;
+        }
+        return null;
+    }
+
+    private async ensureImageCopied(linkedFile: TFile, assetDir: string, processedFiles: Set<string>) {
+        if (!processedFiles.has(linkedFile.name)) {
+            if (!fs.existsSync(assetDir)) fs.mkdirSync(assetDir, { recursive: true });
+            const imageContent = await this.app.vault.readBinary(linkedFile);
+            fs.writeFileSync(pathNode.join(assetDir, linkedFile.name), Buffer.from(imageContent));
+            processedFiles.add(linkedFile.name);
+        }
     }
 }

@@ -4,11 +4,13 @@ import HexoIntegration from "./main";
 export interface HexoIntegrationSettings {
     mySetting: string;
     hexoRoot: string;
+    postHashes: Record<string, string>;
 }
 
 export const DEFAULT_SETTINGS: HexoIntegrationSettings = {
     mySetting: 'default',
-    hexoRoot: ''
+    hexoRoot: '',
+    postHashes: {}
 }
 
 export class HexoIntegrationSettingTab extends PluginSettingTab {

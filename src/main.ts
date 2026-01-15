@@ -1,10 +1,11 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, TFile } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, TFile, TAbstractFile } from 'obsidian';
 import { DEFAULT_SETTINGS, HexoIntegrationSettings, HexoIntegrationSettingTab } from "./settings";
 
 // Remember to rename these classes and interfaces!
 
 export default class HexoIntegration extends Plugin {
     settings: HexoIntegrationSettings;
+    statusBarItemEl: HTMLElement;
 
     async onload() {
         await this.loadSettings();
@@ -16,8 +17,38 @@ export default class HexoIntegration extends Plugin {
         });
 
         // This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-        const statusBarItemEl = this.addStatusBarItem();
-        statusBarItemEl.setText('Status bar text');
+        this.statusBarItemEl = this.addStatusBarItem();
+        this.statusBarItemEl.addClass('mod-clickable');
+        this.statusBarItemEl.setAttr('title', 'Click to publish to Hexo');
+
+        this.statusBarItemEl.onClickEvent(() => {
+            const activeFile = this.app.workspace.getActiveFile();
+            if (activeFile) {
+                this.publishPost(activeFile);
+            }
+        });
+
+        this.registerEvent(this.app.workspace.on('file-open', () => this.updateStatusBar()));
+        this.registerEvent(this.app.metadataCache.on('changed', () => this.updateStatusBar()));
+
+        // Listen for renames and deletes
+        this.registerEvent(this.app.vault.on('rename', (file: TAbstractFile, oldPath: string) => {
+            if (this.settings.postHashes[oldPath]) {
+                const hash = this.settings.postHashes[oldPath];
+                delete this.settings.postHashes[oldPath];
+                this.settings.postHashes[file.path] = hash;
+                this.saveSettings();
+            }
+        }));
+
+        this.registerEvent(this.app.vault.on('delete', (file: TAbstractFile) => {
+            if (this.settings.postHashes[file.path]) {
+                delete this.settings.postHashes[file.path];
+                this.saveSettings();
+            }
+        }));
+
+        this.updateStatusBar();
 
         // This adds a simple command that can be triggered anywhere
         this.addCommand({
@@ -161,6 +192,7 @@ publish: false
             }
 
             let content = await this.app.vault.read(file);
+            const originalContent = content; // Keep original for hashing
 
             // Handle images
             const embeds = cache?.embeds || [];
@@ -191,9 +223,54 @@ publish: false
 
             fs.writeFileSync(pathNode.join(targetDir, file.name), content);
             new Notice(`Published ${file.name} to Hexo blog with ${embeds.length} images handled.`);
+
+            // Save hash for sync check (use original content!)
+            this.settings.postHashes[file.path] = await this.computeHash(originalContent);
+            await this.saveSettings();
+
+            this.updateStatusBar();
         } catch (error: any) {
             console.error(error);
             new Notice(`Error publishing post: ${error.message}`);
+        }
+    }
+
+    async computeHash(content: string): Promise<string> {
+        const buffer = new TextEncoder().encode(content);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async updateStatusBar() {
+        const file = this.app.workspace.getActiveFile();
+        if (!file || file.extension !== 'md') {
+            this.statusBarItemEl.setText('');
+            this.statusBarItemEl.style.display = 'none';
+            return;
+        }
+
+        const cache = this.app.metadataCache.getFileCache(file);
+        const frontmatter = cache?.frontmatter;
+
+        if (!frontmatter || frontmatter.publish === undefined) {
+            this.statusBarItemEl.setText('');
+            this.statusBarItemEl.style.display = 'none';
+            return;
+        }
+
+        if (frontmatter.publish === false) {
+            this.statusBarItemEl.setText('🔴 Unpublished');
+        } else {
+            const content = await this.app.vault.read(file);
+            const currentHash = await this.computeHash(content);
+            const savedHash = this.settings.postHashes[file.path];
+
+            if (currentHash !== savedHash) {
+                this.statusBarItemEl.setText('🟡 Unsynced');
+            } else {
+                this.statusBarItemEl.setText('🟢 Published');
+            }
         }
     }
 

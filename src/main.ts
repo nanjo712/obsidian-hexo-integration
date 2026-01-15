@@ -1,7 +1,5 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, TFile, TAbstractFile } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, TFile, TAbstractFile, SuggestModal, addIcon, setIcon } from 'obsidian';
 import { DEFAULT_SETTINGS, HexoIntegrationSettings, HexoIntegrationSettingTab } from "./settings";
-
-// Remember to rename these classes and interfaces!
 
 export default class HexoIntegration extends Plugin {
     settings: HexoIntegrationSettings;
@@ -10,10 +8,13 @@ export default class HexoIntegration extends Plugin {
     async onload() {
         await this.loadSettings();
 
+        // Register custom Hexo icon
+        addIcon('hexo-logo', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.02 0L1.596 6.02l-.02 12L11.978 24l10.426-6.02.02-12zm4.828 17.14l-.96.558-.969-.574V12.99H9.081v4.15l-.96.558-.969-.574V6.854l.964-.552.965.563v4.145h5.838V6.86l.965-.552.964.563z"/></svg>');
+
         // This creates an icon in the left ribbon.
-        this.addRibbonIcon('dice', 'Hexo Integration', (evt: MouseEvent) => {
+        this.addRibbonIcon('hexo-logo', 'Hexo Integration', (evt: MouseEvent) => {
             // Called when the user clicks the icon.
-            new Notice('This is a notice!');
+            new HexoCommandModal(this.app, this).open();
         });
 
         // This adds a status bar item to the bottom of the app. Does not work on mobile apps.
@@ -50,15 +51,6 @@ export default class HexoIntegration extends Plugin {
 
         this.updateStatusBar();
 
-        // This adds a simple command that can be triggered anywhere
-        this.addCommand({
-            id: 'open-modal-simple',
-            name: 'Open modal (simple)',
-            callback: () => {
-                new HexoIntegrationModal(this.app).open();
-            }
-        });
-
         this.addCommand({
             id: 'create-hexo-post',
             name: 'Create new Hexo Post',
@@ -89,19 +81,8 @@ export default class HexoIntegration extends Plugin {
             }
         });
 
-
         // This adds a settings tab so the user can configure various aspects of the plugin
         this.addSettingTab(new HexoIntegrationSettingTab(this.app, this));
-
-        // If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-        // Using this function will automatically remove the event listener when this plugin is disabled.
-        this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-            new Notice("Click");
-        });
-
-        // When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-        this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
-
     }
 
     onunload() {
@@ -245,7 +226,7 @@ publish: false
     async updateStatusBar() {
         const file = this.app.workspace.getActiveFile();
         if (!file || file.extension !== 'md') {
-            this.statusBarItemEl.setText('');
+            this.statusBarItemEl.empty();
             this.statusBarItemEl.style.display = 'none';
             return;
         }
@@ -254,24 +235,47 @@ publish: false
         const frontmatter = cache?.frontmatter;
 
         if (!frontmatter || frontmatter.publish === undefined) {
-            this.statusBarItemEl.setText('');
+            this.statusBarItemEl.empty();
             this.statusBarItemEl.style.display = 'none';
             return;
         }
 
+        this.statusBarItemEl.empty();
+        this.statusBarItemEl.style.display = 'inline-flex';
+        this.statusBarItemEl.style.alignItems = 'center';
+        this.statusBarItemEl.style.gap = '4px';
+
+        let iconId = '';
+        let statusText = '';
+        let color = '';
+
         if (frontmatter.publish === false) {
-            this.statusBarItemEl.setText('🔴 Unpublished');
+            iconId = 'circle';
+            statusText = 'Unpublished';
+            color = 'var(--text-muted)';
         } else {
             const content = await this.app.vault.read(file);
             const currentHash = await this.computeHash(content);
             const savedHash = this.settings.postHashes[file.path];
 
             if (currentHash !== savedHash) {
-                this.statusBarItemEl.setText('🟡 Unsynced');
+                iconId = 'alert-circle';
+                statusText = 'Unsynced';
+                color = 'var(--text-warning)';
             } else {
-                this.statusBarItemEl.setText('🟢 Published');
+                iconId = 'check-circle';
+                statusText = 'Published';
+                color = 'var(--text-success)';
             }
         }
+
+        const iconEl = this.statusBarItemEl.createSpan();
+        setIcon(iconEl, iconId);
+        iconEl.style.color = color;
+        iconEl.style.display = 'flex';
+
+        const textEl = this.statusBarItemEl.createSpan({ text: statusText });
+        textEl.style.color = color;
     }
 
     async loadSettings() {
@@ -283,18 +287,52 @@ publish: false
     }
 }
 
-class HexoIntegrationModal extends Modal {
-    constructor(app: App) {
+interface HexoCommand {
+    label: string;
+    callback: () => void;
+}
+
+class HexoCommandModal extends SuggestModal<HexoCommand> {
+    plugin: HexoIntegration;
+
+    constructor(app: App, plugin: HexoIntegration) {
         super(app);
+        this.plugin = plugin;
+        this.setPlaceholder("Search for a Hexo command...");
     }
 
-    onOpen() {
-        let { contentEl } = this;
-        contentEl.setText('Woah!');
+    getSuggestions(query: string): HexoCommand[] {
+        const activeFile = this.app.workspace.getActiveFile();
+        const commands: HexoCommand[] = [
+            {
+                label: "Create new Hexo Post",
+                callback: () => this.plugin.createHexoPost()
+            }
+        ];
+
+        if (activeFile && activeFile.extension === "md") {
+            commands.push({
+                label: "Publish current post",
+                callback: () => this.plugin.publishPost(activeFile)
+            });
+            commands.push({
+                label: "Convert current file to Hexo format",
+                callback: () => this.plugin.convertToHexo(activeFile)
+            });
+        }
+
+        return commands.filter((command) =>
+            command.label.toLowerCase().includes(query.toLowerCase())
+        );
     }
 
-    onClose() {
-        const { contentEl } = this;
-        contentEl.empty();
+    renderSuggestion(command: HexoCommand, el: HTMLElement) {
+        el.createEl("div", { text: command.label });
+    }
+
+    onChooseSuggestion(command: HexoCommand, evt: MouseEvent | KeyboardEvent) {
+        command.callback();
     }
 }
+
+

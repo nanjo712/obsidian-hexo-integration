@@ -1,8 +1,9 @@
 import { App, TFile, Notice } from 'obsidian';
 import { HexoIntegrationSettings } from '../settings';
-import { SlugService } from './SlugService';
+import { PermalinkService } from './PermalinkService';
 import { SyncService } from './SyncService';
 import { ImageService } from './ImageService';
+import { LinkService } from './LinkService';
 import * as fs from 'fs';
 import * as pathNode from 'path';
 
@@ -10,9 +11,10 @@ export class PostService {
     constructor(
         private app: App,
         private settings: HexoIntegrationSettings,
-        private slugService: SlugService,
+        private permalinkService: PermalinkService,
         private syncService: SyncService,
-        private imageService: ImageService
+        private imageService: ImageService,
+        private linkService: LinkService
     ) { }
 
     async createHexoPost() {
@@ -43,10 +45,10 @@ publish: false
     }
 
     async convertToHexo(file: TFile) {
-        const generatedSlug = await this.slugService.generateSlug(file.basename);
+        const generatedPermalink = await this.permalinkService.generatePermalink(file.basename);
         await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
             if (!frontmatter.title) frontmatter.title = file.basename;
-            if (!frontmatter.slug) frontmatter.slug = generatedSlug;
+            if (!frontmatter.permalink) frontmatter.permalink = generatedPermalink;
             if (!frontmatter.date) frontmatter.date = this.getFormattedDate();
             if (!frontmatter.tags) frontmatter.tags = [];
             if (frontmatter.publish === undefined) frontmatter.publish = false;
@@ -63,22 +65,6 @@ publish: false
         const cache = this.app.metadataCache.getFileCache(file);
         let frontmatter = cache?.frontmatter;
 
-        // Ensure slug
-        if (!frontmatter?.slug) {
-            if (this.settings.slugStyle === 'manual') {
-                new Notice('Error: Slug is required but not filled.');
-                return;
-            }
-
-            const generatedSlug = await this.slugService.generateSlug(file.basename);
-            if (generatedSlug) {
-                await this.app.fileManager.processFrontMatter(file, (fm) => {
-                    fm.slug = generatedSlug;
-                });
-                const updatedCache = this.app.metadataCache.getFileCache(file);
-                frontmatter = updatedCache?.frontmatter;
-            }
-        }
 
         const isHexoFormat = frontmatter && 'title' in frontmatter && 'date' in frontmatter && 'tags' in frontmatter && 'publish' in frontmatter;
         if (!isHexoFormat) {
@@ -114,6 +100,7 @@ publish: false
             }
 
             content = await this.imageService.processImages(file, content, processedFiles);
+            content = await this.linkService.transformLinks(content, file);
 
             fs.writeFileSync(pathNode.join(targetDir, file.name), content);
             new Notice(`Published ${file.name} to Hexo blog.`);

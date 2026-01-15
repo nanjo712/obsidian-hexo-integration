@@ -14,7 +14,7 @@ export class SyncService {
     isHexoFormat(file: TFile): boolean {
         const cache = this.app.metadataCache.getFileCache(file);
         const frontmatter = cache?.frontmatter;
-        return !!(frontmatter && 'title' in frontmatter && 'date' in frontmatter && 'tags' in frontmatter && 'publish' in frontmatter);
+        return !!(frontmatter && 'publish' in frontmatter);
     }
 
     async getSyncStatus(file: TFile): Promise<'published' | 'unsynced' | 'unpublished'> {

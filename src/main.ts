@@ -1,16 +1,18 @@
-import { App, Modal, Notice, Plugin, TFile, TAbstractFile, SuggestModal, addIcon, setIcon } from 'obsidian';
+import { App, Modal, Notice, Plugin, TFile, TAbstractFile, SuggestModal, addIcon, setIcon, WorkspaceLeaf } from 'obsidian';
 import { DEFAULT_SETTINGS, HexoIntegrationSettings, HexoIntegrationSettingTab } from "./settings";
-import { SlugService } from './services/SlugService';
+import { PermalinkService } from './services/PermalinkService';
 import { HexoService } from './services/HexoService';
 import { SyncService } from './services/SyncService';
 import { ImageService } from './services/ImageService';
 import { PostService } from './services/PostService';
+import { LinkService } from './services/LinkService';
+import { HexoManagementView, HEXO_VIEW_TYPE } from './views/HexoManagementView';
 
 export default class HexoIntegration extends Plugin {
     settings: HexoIntegrationSettings;
     statusBarItemEl: HTMLElement;
 
-    slugService: SlugService;
+    permalinkService: PermalinkService;
     hexoService: HexoService;
     syncService: SyncService;
     imageService: ImageService;
@@ -20,11 +22,12 @@ export default class HexoIntegration extends Plugin {
         await this.loadSettings();
 
         // Initialize Services
-        this.slugService = new SlugService(this.settings);
+        this.permalinkService = new PermalinkService(this.settings);
         this.hexoService = new HexoService(this.app, this.settings);
         this.syncService = new SyncService(this.app, this.settings);
         this.imageService = new ImageService(this.app, this.settings);
-        this.postService = new PostService(this.app, this.settings, this.slugService, this.syncService, this.imageService);
+        const linkService = new LinkService(this.app);
+        this.postService = new PostService(this.app, this.settings, this.permalinkService, this.syncService, this.imageService, linkService);
 
         // Register custom Hexo icon
         addIcon('hexo-logo', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.02 0L1.596 6.02l-.02 12L11.978 24l10.426-6.02.02-12zm4.828 17.14l-.96.558-.969-.574V12.99H9.081v4.15l-.96.558-.969-.574V6.854l.964-.552.965.563v4.145h5.838V6.86l.965-.552.964.563z"/></svg>');
@@ -95,23 +98,31 @@ export default class HexoIntegration extends Plugin {
         });
 
         this.addCommand({
-            id: 'generate-slug',
-            name: 'Generate Slug for current post',
+            id: 'generate-permalink',
+            name: 'Generate Permalink for current post',
             callback: async () => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) {
-                    const generatedSlug = await this.slugService.generateSlug(activeFile.basename);
-                    if (generatedSlug) {
+                    const generatedPermalink = await this.permalinkService.generatePermalink(activeFile.basename);
+                    if (generatedPermalink) {
                         await this.app.fileManager.processFrontMatter(activeFile, (fm) => {
-                            fm.slug = generatedSlug;
+                            fm.permalink = generatedPermalink;
                         });
-                        new Notice(`Generated slug: ${generatedSlug}`);
+                        new Notice(`Generated permalink: ${generatedPermalink}`);
                     }
                 }
             }
         });
 
         this.addSettingTab(new HexoIntegrationSettingTab(this.app, this));
+
+        this.registerView(HEXO_VIEW_TYPE, (leaf) => new HexoManagementView(leaf, this));
+
+        this.addCommand({
+            id: 'open-hexo-management-view',
+            name: 'Open Hexo Management View',
+            callback: () => this.activateView(),
+        });
 
         this.registerEvent(this.app.workspace.on('file-open', () => this.updateStatusBar()));
         this.registerEvent(this.app.vault.on('modify', (file) => {
@@ -178,6 +189,27 @@ export default class HexoIntegration extends Plugin {
     async saveSettings() {
         await this.saveData(this.settings);
     }
+
+    async activateView() {
+        const { workspace } = this.app;
+
+        let leaf: WorkspaceLeaf | null = null;
+        const leaves = workspace.getLeavesOfType(HEXO_VIEW_TYPE);
+
+        if (leaves.length > 0) {
+            leaf = leaves[0]!;
+        } else {
+            const rightLeaf = workspace.getRightLeaf(false);
+            if (rightLeaf) {
+                leaf = rightLeaf;
+                await leaf.setViewState({ type: HEXO_VIEW_TYPE, active: true });
+            }
+        }
+
+        if (leaf) {
+            workspace.revealLeaf(leaf);
+        }
+    }
 }
 
 interface HexoCommand {
@@ -209,6 +241,10 @@ class HexoCommandModal extends SuggestModal<HexoCommand> {
                 }
             },
             {
+                label: "Open Hexo Management View",
+                callback: () => this.plugin.activateView()
+            },
+            {
                 label: "Generate Hexo Pages",
                 callback: () => this.plugin.hexoService.hexoGenerate()
             },
@@ -221,16 +257,16 @@ class HexoCommandModal extends SuggestModal<HexoCommand> {
                 callback: () => this.plugin.hexoService.hexoDeploy()
             },
             {
-                label: "Generate Slug",
+                label: "Generate Permalink",
                 callback: async () => {
                     const activeFile = this.app.workspace.getActiveFile();
                     if (activeFile) {
-                        const generatedSlug = await this.plugin.slugService.generateSlug(activeFile.basename);
-                        if (generatedSlug) {
+                        const generatedPermalink = await this.plugin.permalinkService.generatePermalink(activeFile.basename);
+                        if (generatedPermalink) {
                             await this.app.fileManager.processFrontMatter(activeFile, (fm) => {
-                                fm.slug = generatedSlug;
+                                fm.permalink = generatedPermalink;
                             });
-                            new Notice(`Generated slug: ${generatedSlug}`);
+                            new Notice(`Generated permalink: ${generatedPermalink}`);
                         }
                     }
                 }

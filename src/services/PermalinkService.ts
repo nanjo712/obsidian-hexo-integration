@@ -3,7 +3,7 @@ import * as crypto_node from 'crypto';
 import { pinyin } from 'pinyin-pro';
 import { HexoIntegrationSettings } from '../settings';
 
-export class SlugService {
+export class PermalinkService {
     constructor(private settings: HexoIntegrationSettings) { }
 
     async computeHash(content: string): Promise<string> {
@@ -13,7 +13,7 @@ export class SlugService {
         return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    async generateSlug(text: string): Promise<string> {
+    async generatePermalink(text: string): Promise<string> {
         let result = "";
         switch (this.settings.slugStyle) {
             case 'hash':
@@ -25,14 +25,18 @@ export class SlugService {
                 break;
             case 'translate':
                 const translated = await this.translateWithBaidu(text);
-                result = translated ? this.postProcessSlug(translated) : "";
+                result = translated ? this.postProcessPermalink(translated) : "";
                 break;
             case 'title':
-                result = this.postProcessSlug(text);
+                result = this.postProcessPermalink(text);
                 break;
             case 'manual':
             default:
                 return "";
+        }
+
+        if (result && !result.endsWith('/') && !result.endsWith('.html')) {
+            result += '/';
         }
         return result;
     }
@@ -69,7 +73,7 @@ export class SlugService {
         return "";
     }
 
-    postProcessSlug(text: string): string {
+    postProcessPermalink(text: string): string {
         let words = text.toLowerCase().split(/[^a-z0-9]+/i).filter(w => w.length > 0);
 
         if (this.settings.removeStopWords) {
@@ -81,11 +85,11 @@ export class SlugService {
             words = words.slice(0, this.settings.maxSlugWords);
         }
 
-        return words.join('-') || 'slug';
+        return words.join('-') || 'post';
     }
 
     convertToPinyinInitials(text: string): string {
         const initials = pinyin(text, { pattern: 'initial', type: 'array', nonZh: 'spaced' });
-        return initials.join('').toLowerCase().replace(/[^a-z0-9]/g, '') || 'slug';
+        return initials.join('').toLowerCase().replace(/[^a-z0-9]/g, '') || 'post';
     }
 }

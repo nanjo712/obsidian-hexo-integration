@@ -1,8 +1,173 @@
-/*
+/* Hexo Management View Styles */
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.hexo-management-view {
+    padding: 16px;
+    background-color: var(--background-primary);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
 
-If your plugin does not need CSS, delete this file.
+.hexo-view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
 
-*/
+.hexo-view-header h4 {
+    margin: 0;
+    font-size: 1.25em;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.hexo-view-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.hexo-view-section {
+    margin-bottom: 32px;
+}
+
+.hexo-view-section h5 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    color: var(--text-muted);
+    font-size: 0.8em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.hexo-post-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.hexo-post-card {
+    background-color: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.hexo-post-card:hover {
+    border-color: var(--interactive-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.hexo-post-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.hexo-post-title {
+    font-weight: 500;
+    font-size: 0.95em;
+    color: var(--text-normal);
+    cursor: pointer;
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hexo-post-title:hover {
+    color: var(--text-accent);
+    text-decoration: underline;
+}
+
+.hexo-status-badge {
+    font-size: 0.7em;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.hexo-status-badge.modified {
+    background-color: rgba(255, 165, 0, 0.15);
+    color: #ffa500;
+}
+
+.hexo-status-badge.new {
+    background-color: rgba(0, 128, 0, 0.15);
+    color: #4CAF50;
+}
+
+.hexo-post-card-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.hexo-post-card button {
+    font-size: 0.85em;
+    padding: 4px 12px;
+    height: unset;
+}
+
+.hexo-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    opacity: 0.6;
+}
+
+/* Collapsible Sections */
+.hexo-view-section summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    outline: none;
+}
+
+.hexo-view-section summary h5 {
+    margin: 0;
+    flex-grow: 1;
+}
+
+.hexo-view-section summary::-webkit-details-marker {
+    display: none;
+}
+
+.hexo-view-section summary .folding-icon {
+    transition: transform 0.2s ease;
+    opacity: 0.6;
+}
+
+.hexo-view-section[open] summary .folding-icon {
+    transform: rotate(90-deg);
+}
+
+.hexo-view-section .hexo-post-list {
+    margin-top: 8px;
+    padding-left: 12px;
+    border-left: 1px solid var(--background-modifier-border);
+}
+
+.hexo-status-badge.published {
+    background-color: rgba(var(--mono-rgb-100), 0.05);
+    color: var(--text-muted);
+    border: 1px solid var(--background-modifier-border);
+}

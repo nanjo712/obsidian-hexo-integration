@@ -359,15 +359,15 @@ class HexoCommandModal extends SuggestModal<HexoCommand> {
                 callback: () => this.plugin.createHexoPost()
             },
             {
-                label: "Hexo: Generate",
+                label: "Generate Hexo Pages",
                 callback: () => this.plugin.hexoGenerate()
             },
             {
-                label: "Hexo: Server",
+                label: "Start Hexo Server",
                 callback: () => this.plugin.hexoServer()
             },
             {
-                label: "Hexo: Deploy",
+                label: "Deploy Hexo Pages",
                 callback: () => this.plugin.hexoDeploy()
             }
         ];

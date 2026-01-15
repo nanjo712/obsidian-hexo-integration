@@ -9,6 +9,7 @@ export interface HexoIntegrationSettings {
     baiduApiKey: string;
     removeStopWords: boolean;
     maxSlugWords: number;
+    imageSyntax: 'hexo' | 'markdown';
 }
 
 export const DEFAULT_SETTINGS: HexoIntegrationSettings = {
@@ -18,7 +19,8 @@ export const DEFAULT_SETTINGS: HexoIntegrationSettings = {
     baiduAppId: '',
     baiduApiKey: '',
     removeStopWords: true,
-    maxSlugWords: 5
+    maxSlugWords: 5,
+    imageSyntax: 'hexo'
 }
 
 export class HexoIntegrationSettingTab extends PluginSettingTab {
@@ -59,6 +61,18 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                     this.plugin.settings.slugStyle = value;
                     await this.plugin.saveSettings();
                     this.display(); // Refresh to show/hide relevant settings
+                }));
+
+        new Setting(containerEl)
+            .setName('Image Syntax')
+            .setDesc('How images should be referenced in the published post.')
+            .addDropdown(dropdown => dropdown
+                .addOption('hexo', 'Hexo Tag ({% asset_img %})')
+                .addOption('markdown', 'Native Markdown (![]())')
+                .setValue(this.plugin.settings.imageSyntax)
+                .onChange(async (value: 'hexo' | 'markdown') => {
+                    this.plugin.settings.imageSyntax = value;
+                    await this.plugin.saveSettings();
                 }));
 
         if (this.plugin.settings.slugStyle === 'translate') {

@@ -29,11 +29,23 @@ export class ImageService {
 
                 // Replace syntax in content
                 const altText = embed.displayText !== linkedFile.name ? embed.displayText : '';
+                let replacement = "";
+                if (this.settings.imageSyntax === 'markdown') {
+                    replacement = `![${altText}](${linkedFile.name})`;
+                } else {
+                    replacement = `{% asset_img ${linkedFile.name} ${altText} %}`;
+                }
+
                 const wikiRegex = new RegExp(`!\\[\\[${embed.link.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\|.*?)?\\]\\]`, 'g');
-                updatedContent = updatedContent.replace(wikiRegex, `{% asset_img ${linkedFile.name} ${altText} %}`);
+                updatedContent = updatedContent.replace(wikiRegex, replacement);
 
                 const mdRegex = new RegExp(`!\\[(.*?)\\]\\(${embed.link.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)`, 'g');
-                updatedContent = updatedContent.replace(mdRegex, (match, alt) => `{% asset_img ${linkedFile.name} ${alt || ''} %}`);
+                updatedContent = updatedContent.replace(mdRegex, (match, alt) => {
+                    const currentAlt = alt || altText;
+                    return this.settings.imageSyntax === 'markdown'
+                        ? `![${currentAlt}](${linkedFile.name})`
+                        : `{% asset_img ${linkedFile.name} ${currentAlt} %}`;
+                });
             }
         }
 

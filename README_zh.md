@@ -11,6 +11,11 @@
   - **生成 Hexo 页面**: 在 Obsidian 中直接运行 `hexo generate`。
   - **启动 Hexo 服务器**: 运行 `hexo server` 实时预览您的博客。
   - **部署 Hexo 页面**: 运行 `hexo deploy` 将您的站点推送到线上。
+- **高级 Slug 生成**:
+  - 根据您的偏好自动生成 URL：支持 **短哈希 (Short Hash)**、**拼音首字母 (Pinyin Initials)**、**直接使用标题 (Note Title)** 或 **百度翻译 (Baidu Translate)**。
+  - **直接使用标题 (Note Title)**: 直接使用文章标题作为 Slug（支持可选的格式清理）。非常适合英文用户。
+  - **百度翻译集成**: 自动将中文标题转换为利于 SEO 的英文 Slug。
+  - **智能格式化**: 支持自动去除英文停用词（a, the, in 等）并可设置 Slug 的最大单词截断数量（适用于“标题”和“翻译”模式）。
 - **智能图像处理**:
   - 自动将嵌入的图像复制到文章对应的资源文件夹（asset folder）。
   - 将 Wikilink 和 Markdown 图像语法自动转换为 Hexo 特有的 `{% asset_img ... %}` 标签。
@@ -22,22 +27,33 @@
   - 实时显示同步状态：**⚪ 未发布 (Unpublished)**, **🟡 未同步 (Unsynced)**, 或 **🟢 已发布 (Published)**。
   - 点击状态栏指示器可直接触发发布。
 - **Hexo 命令面板**:
-  - 侧边栏专属图标（Hexo Logo），一键访问所有插件命令。
+  - 侧边栏专属图标（Hexo Logo），一键访问所有插件命令，包括全新的 **Generate Slug** 工具。
 - **元数据自动化**:
-  - 自动为笔记添加必要的 Hexo Frontmatter (`title`, `date`, `tags`, `publish`)。
+  - 自动为笔记添加必要的 Hexo Frontmatter (`title`, `slug`, `date`, `tags`, `publish`)。
   - 提供“创建新的 Hexo 文章”模板，让您立即开始写作。
 
 ## 🛠️ 配置说明
 
 1. 进入 **设置 (Settings)** > **Hexo Integration**。
 2. 设置 **Hexo Root Directory**: 提供 Hexo 博客根目录的绝对路径（例如：`D:\MyBlog`）。
-3. (可选) 通过 Obsidian 的热键设置，为您常用的命令配置快捷键。
+3. 设置 **Slug Style**: 选择当 Slug 缺失时如何自动生成：
+    - **Short Hash**: 生成 8 位唯一哈希码。
+    - **Pinyin Initials**: 将中文字符转换为拼音首字母（例如：“测试” -> “cs”）。
+    - **Note Title**: 直接使用文章标题。
+    - **Baidu Translate**: 使用百度翻译 API 将标题转换为英文。
+        - 需要填入 **Baidu AppID** 和 **API Key**。
+    - **Manual**: 手动模式。若未填写 Slug，将中止发布流程并提醒。
+4. **Slug 后处理** (适用于“标题”和“百度翻译”模式):
+    - **Remove Stop Words**: 开启后将自动过滤 Slug 中的英文虚词（a, the 等）。
+    - **Max Slug Words**: 限制生成的 Slug 最大单词数量。
+5. (可选) 通过 Obsidian 的热键设置配置快捷键。
 
 ## 📖 使用指南
 
 ### 1. 创建或转换
-- 使用 **Create new Hexo Post** 命令，使用正确的模板开始新文章。
-- 或者，使用 **Convert current file to Hexo format** 为现有笔记添加元数据。
+- 使用 **Create new Hexo Post** 命令使用模板开始新文章。
+- 使用 **Convert current file to Hexo format** 为现有笔记添加元数据。
+- 使用 **Generate Slug** 命令手动生成或更新 Slug 字段。
 
 ### 2. 管理博客
 - 点击左侧边栏的 **Hexo 图标**:
@@ -47,23 +63,22 @@
 
 ### 3. 查看状态
 - 观察右下角的 **状态栏 (Status Bar)**。
-- **🟢 已发布**: 您的笔记内容与博客中的内容一致。
-- **🟡 未同步**: 自上次发布以来，您对本地笔记进行了修改。
-- **⚪ 未发布**: 该笔记尚未同步，或由于 `publish: false` 未被标记为发布。
+- **🟢 已发布**: 内容一致。
+- **🟡 未同步**: 检测到本地有新修改。
+- **⚪ 未发布**: 尚未同步或未标记为发布。
 
 ### 4. 发布文章
-- 直接点击 **状态栏** 指示器。
-- 或在侧边栏的 Hexo 菜单中选择 **Publish current post**。
+- 直接点击 **状态栏** 指示器，或在侧边栏的 Hexo 菜单中选择 **Publish current post**。
 
 ## ⚙️ 技术细节
 
-- **哈希存储**: 文件内容的哈希值存储在插件的 `data.json` 中。这保持了 Markdown 文件的整洁，并能可靠地检测内容变化，不受文件修改时间的影响。
-- **图像转换**: 插件会解析笔记中的图像，将其复制到文章专属资源文件夹，并更新引用，确保图像在 Hexo 中正确渲染。
+- **哈希存储**: 文件哈希值存储在 `data.json` 中，确保 Markdown 文件整洁的同时实现可靠的变化检测。
+- **图像转换**: 自动处理图像引用，确保在 Hexo 中正确显示。
 
 ## ⚠️ 重要提示
 
-- 如果您使用图像，请确保 Hexo 博客已启用 `post_asset_folder` 设置。
-- Frontmatter 中的 `publish` 字段必须设置为 `true` 才能激活同步追踪。
+- 如果使用图像，请确保 Hexo 启用 `post_asset_folder: true` 设置。
+- Frontmatter 中的 `publish` 字段必须为 `true` 才能激活同步追踪。
 
 ---
 

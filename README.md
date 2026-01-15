@@ -11,6 +11,11 @@ A powerful Obsidian plugin that streamlines the process of publishing specialize
   - **Generate Hexo Pages**: Run `hexo generate` from Obsidian.
   - **Start Hexo Server**: Run `hexo server` to preview your blog.
   - **Deploy Hexo Pages**: Run `hexo deploy` to push your site live.
+- **Advanced Slug Generation**:
+  - Automatically generate URLs based on your preference: **Short Hash**, **Pinyin Initials**, **Note Title** or **Baidu Translate**.
+  - **Note Title**: Directly uses your note's title (with optional cleaning). Perfect for English users.
+  - **Baidu Translate Integration**: Automatically converts Chinese titles to SEO-friendly English slugs.
+  - **Smart Formatting**: Option to remove stop words (a, the, in, etc.) and truncate slugs to a specific word count (available for Title and Translate modes).
 - **Smart Image Handling**:
   - Automatically copies embedded images to post-specific asset folders.
   - Transforms Wikilink and Markdown image syntax to Hexo's specific `{% asset_img ... %}` tags.
@@ -22,22 +27,33 @@ A powerful Obsidian plugin that streamlines the process of publishing specialize
   - Displays real-time sync status: **⚪ Unpublished**, **🟡 Unsynced**, or **🟢 Published**.
   - Clickable status indicator to trigger immediate publishing.
 - **Hexo Command Palette**:
-  - A dedicated ribbon icon (Hexo logo) in the sidebar to access all plugin commands.
+  - A dedicated ribbon icon (Hexo logo) in the sidebar to access all plugin commands, including a new **Generate Slug** tool.
 - **Metadata Automation**:
-  - Automatically adds required Hexo frontmatter (`title`, `date`, `tags`, `publish`) to your notes.
+  - Automatically adds required Hexo frontmatter (`title`, `slug`, `date`, `tags`, `publish`) to your notes.
   - "Create new Hexo Post" template to start writing immediately.
 
 ## 🛠️ Configuration
 
 1. Go to **Settings** > **Hexo Integration**.
 2. Set your **Hexo Root Directory**: Provide the absolute path to your Hexo blog's root folder (e.g., `D:\MyBlog`).
-3. (Optional) Customize your hotkeys for commands via the Obsidian Hotkeys settings.
+3. Set your **Slug Style**:
+    - **Short Hash**: Generates an 8-character unique hash.
+    - **Pinyin Initials**: Converts Chinese characters to pinyin initials (e.g., "测试" -> "cs").
+    - **Note Title**: Uses the note title directly.
+    - **Baidu Translate**: Uses Baidu API to translate titles to English.
+        - Requires **Baidu AppID** and **API Key**.
+    - **Manual**: Aborts publication if the slug is not manually filled.
+4. **Slug Post-Processing** (For Title and Baidu styles):
+    - **Remove Stop Words**: Clean up slugs by removing common English words (a, the, etc.).
+    - **Max Slug Words**: Limit the length of the generated slug.
+5. (Optional) Customize hotkeys via the Obsidian Hotkeys settings.
 
 ## 📖 How to Use
 
 ### 1. Create or Convert
-- Use the **Create new Hexo Post** command to start a new post with the correct template.
-- Or, use **Convert current file to Hexo format** to add metadata to an existing note.
+- Use **Create new Hexo Post** to start a new post with the correct template.
+- Use **Convert current file to Hexo format** to prepare an existing note.
+- Use **Generate Slug** to manually create or update the slug field.
 
 ### 2. Manage your Blog
 - Click the **Hexo icon** in the left ribbon to:
@@ -47,23 +63,22 @@ A powerful Obsidian plugin that streamlines the process of publishing specialize
 
 ### 3. Track Status
 - Look at the bottom-right **Status Bar**.
-- **🟢 Published**: Your note matches what's in your blog.
-- **🟡 Unsynced**: You've made local changes since your last publish.
-- **⚪ Unpublished**: This note hasn't been synced or isn't marked for publishing yet.
+- **🟢 Published**: Matches your blog.
+- **🟡 Unsynced**: Local changes detected.
+- **⚪ Unpublished**: Not yet synced or marked for publishing.
 
 ### 4. Publish
-- Click the **Status Bar** indicator directly.
-- Or, select **Publish current post** from the Hexo sidebar menu.
+- Click the **Status Bar** directly, or select **Publish current post** from the Hexo sidebar menu.
 
 ## ⚙️ Technical Details
 
-- **Hash Storage**: File content hashes are stored in the plugin's `data.json`. This keeps your Markdown files clean and allows for reliable change detection regardless of file modification times.
-- **Image Transformation**: The plugin parses your note for images, copies them to an asset folder matching the post name, and updates the references to ensure they render correctly in Hexo.
+- **Hash Storage**: File hashes are stored in `data.json` for reliable, frontmatter-clean change detection.
+- **Image Transformation**: Copies images to asset folders and updates references to Hexo-compatible tags.
 
 ## ⚠️ Important Notes
 
-- Ensure your Hexo blog is configured to use the `post_asset_folder` setting if you use images.
-- The `publish` field in frontmatter must be set to `true` for the sync tracking to activate.
+- Ensure `post_asset_folder: true` is set in your Hexo `_config.yml` if using images.
+- The `publish` field must be `true` for sync tracking.
 
 ---
 

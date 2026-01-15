@@ -1,16 +1,16 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin } from 'obsidian';
-import { DEFAULT_SETTINGS, MyPluginSettings, SampleSettingTab } from "./settings";
+import { DEFAULT_SETTINGS, HexoIntegrationSettings, HexoIntegrationSettingTab } from "./settings";
 
 // Remember to rename these classes and interfaces!
 
-export default class ObsidianHexoIntegration extends Plugin {
-    settings: MyPluginSettings;
+export default class HexoIntegration extends Plugin {
+    settings: HexoIntegrationSettings;
 
     async onload() {
         await this.loadSettings();
 
         // This creates an icon in the left ribbon.
-        this.addRibbonIcon('dice', 'Sample', (evt: MouseEvent) => {
+        this.addRibbonIcon('dice', 'Hexo Integration', (evt: MouseEvent) => {
             // Called when the user clicks the icon.
             new Notice('This is a notice!');
         });
@@ -24,15 +24,7 @@ export default class ObsidianHexoIntegration extends Plugin {
             id: 'open-modal-simple',
             name: 'Open modal (simple)',
             callback: () => {
-                new SampleModal(this.app).open();
-            }
-        });
-        // This adds an editor command that can perform some operation on the current editor instance
-        this.addCommand({
-            id: 'replace-selected',
-            name: 'Replace selected content',
-            editorCallback: (editor: Editor, view: MarkdownView) => {
-                editor.replaceSelection('Sample editor command');
+                new HexoIntegrationModal(this.app).open();
             }
         });
 
@@ -46,7 +38,7 @@ export default class ObsidianHexoIntegration extends Plugin {
 
 
         // This adds a settings tab so the user can configure various aspects of the plugin
-        this.addSettingTab(new SampleSettingTab(this.app, this));
+        this.addSettingTab(new HexoIntegrationSettingTab(this.app, this));
 
         // If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
         // Using this function will automatically remove the event listener when this plugin is disabled.
@@ -96,7 +88,7 @@ tags:
     }
 
     async loadSettings() {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<MyPluginSettings>);
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<HexoIntegrationSettings>);
     }
 
     async saveSettings() {
@@ -104,7 +96,7 @@ tags:
     }
 }
 
-class SampleModal extends Modal {
+class HexoIntegrationModal extends Modal {
     constructor(app: App) {
         super(app);
     }

@@ -1,18 +1,18 @@
 import {App, PluginSettingTab, Setting} from "obsidian";
-import MyPlugin from "./main";
+import HexoIntegration from "./main";
 
-export interface MyPluginSettings {
+export interface HexoIntegrationSettings {
 	mySetting: string;
 }
 
-export const DEFAULT_SETTINGS: MyPluginSettings = {
+export const DEFAULT_SETTINGS: HexoIntegrationSettings = {
 	mySetting: 'default'
 }
 
-export class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+export class HexoIntegrationSettingTab extends PluginSettingTab {
+	plugin: HexoIntegration;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: HexoIntegration) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}

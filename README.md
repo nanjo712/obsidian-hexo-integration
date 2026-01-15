@@ -18,7 +18,7 @@ A powerful Obsidian plugin that streamlines the process of publishing specialize
   - **Smart Formatting**: Option to remove stop words (a, the, in, etc.) and truncate slugs to a specific word count (available for Title and Translate modes).
 - **Smart Image Handling**:
   - Automatically copies embedded images to post-specific asset folders.
-  - Transforms Wikilink and Markdown image syntax to Hexo's specific `{% asset_img ... %}` tags.
+  - **Flexible Syntax**: Choose between Hexo's specific `{% asset_img ... %}` tags or native Markdown `![]()` syntax for better compatibility with other Markdown editors.
 - **Persistent Sync Tracking (Dirty Check)**:
   - Uses an internal, invisible hash-based system to track if your notes are in sync with your blog.
   - No messy timestamps in your frontmatter.
@@ -46,7 +46,10 @@ A powerful Obsidian plugin that streamlines the process of publishing specialize
 4. **Slug Post-Processing** (For Title and Baidu styles):
     - **Remove Stop Words**: Clean up slugs by removing common English words (a, the, etc.).
     - **Max Slug Words**: Limit the length of the generated slug.
-5. (Optional) Customize hotkeys via the Obsidian Hotkeys settings.
+5. **Image Syntax**:
+    - **Hexo Tag**: Uses `{% asset_img %}` (best for Hexo features like better image scaling).
+    - **Native Markdown**: Uses standard `![]()` (best for cross-editor preview compatibility).
+6. (Optional) Customize hotkeys via the Obsidian Hotkeys settings.
 
 ## 📖 How to Use
 

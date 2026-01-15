@@ -153,7 +153,7 @@ export default class HexoIntegration extends Plugin {
 
         let icon = 'circle';
         let color = '--text-muted';
-        let statusText = 'Unpublished';
+        let statusText = 'Draft';
 
         if (status === 'published') {
             icon = 'check-circle';

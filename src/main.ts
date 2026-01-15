@@ -150,22 +150,47 @@ publish: false
 
         // Copy to Hexo
         try {
-            const content = await this.app.vault.read(file);
-            const path = Buffer.from(this.settings.hexoRoot).toString(); // Ensure path exists
-            const destPath = `${this.settings.hexoRoot}/source/_posts/${file.name}`;
-
-            // Note: Use node fs for writing outside vault
             const fs = require('fs');
             const pathNode = require('path');
             const targetDir = pathNode.join(this.settings.hexoRoot, 'source', '_posts');
+            const assetDir = pathNode.join(targetDir, file.basename);
 
             if (!fs.existsSync(targetDir)) {
                 new Notice(`Error: Target directory ${targetDir} does not exist.`);
                 return;
             }
 
+            let content = await this.app.vault.read(file);
+
+            // Handle images
+            const embeds = cache?.embeds || [];
+            for (const embed of embeds) {
+                const linkedFile = this.app.metadataCache.getFirstLinkpathDest(embed.link, file.path);
+
+                if (linkedFile && ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(linkedFile.extension.toLowerCase())) {
+                    // Create asset folder if it doesn't exist
+                    if (!fs.existsSync(assetDir)) {
+                        fs.mkdirSync(assetDir, { recursive: true });
+                    }
+
+                    // Copy image
+                    const imageContent = await this.app.vault.readBinary(linkedFile);
+                    fs.writeFileSync(pathNode.join(assetDir, linkedFile.name), Buffer.from(imageContent));
+
+                    // Replace syntax in content
+                    // Handle ![[image.png|alt]] or ![[image.png]]
+                    const altText = embed.displayText !== linkedFile.name ? embed.displayText : '';
+                    const wikiRegex = new RegExp(`!\\[\\[${embed.link.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\|.*?)?\\]\\]`, 'g');
+                    content = content.replace(wikiRegex, `{% asset_img ${linkedFile.name} ${altText} %}`);
+
+                    // Handle ![alt](image.png)
+                    const mdRegex = new RegExp(`!\\[(.*?)\\]\\(${embed.link.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)`, 'g');
+                    content = content.replace(mdRegex, (match, alt) => `{% asset_img ${linkedFile.name} ${alt || ''} %}`);
+                }
+            }
+
             fs.writeFileSync(pathNode.join(targetDir, file.name), content);
-            new Notice(`Published ${file.name} to Hexo blog.`);
+            new Notice(`Published ${file.name} to Hexo blog with ${embeds.length} images handled.`);
         } catch (error: any) {
             console.error(error);
             new Notice(`Error publishing post: ${error.message}`);

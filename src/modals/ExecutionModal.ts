@@ -1,4 +1,4 @@
-import { App, Modal, Setting } from "obsidian";
+import { App, Modal } from "obsidian";
 import Convert from 'ansi-to-html';
 import { t } from '../i18n/helpers';
 
@@ -6,8 +6,8 @@ export class ExecutionModal extends Modal {
     private logContainer: HTMLElement;
     private closeButton: HTMLButtonElement;
     private stopButton: HTMLButtonElement;
-    private isRunning: boolean = true;
-    private convert: any;
+    private isRunning = true;
+    private convert: { toHtml: (data: string) => string };
     public onAbort: () => void;
 
     constructor(app: App, private titleText: string) {
@@ -30,22 +30,26 @@ export class ExecutionModal extends Modal {
         this.logContainer = contentEl.createEl("div", {
             cls: "hexo-execution-log-container",
         });
-        this.logContainer.style.backgroundColor = "var(--background-secondary)";
-        this.logContainer.style.padding = "10px";
-        this.logContainer.style.borderRadius = "4px";
-        this.logContainer.style.maxHeight = "400px";
-        this.logContainer.style.overflowY = "auto";
-        this.logContainer.style.whiteSpace = "pre-wrap";
-        this.logContainer.style.fontFamily = "var(--font-monospace)";
-        this.logContainer.style.fontSize = "0.85em";
-        this.logContainer.style.lineHeight = "1.4";
-        this.logContainer.style.border = "1px solid var(--background-modifier-border)";
+        this.logContainer.setCssProps({
+            "background-color": "var(--background-secondary)",
+            "padding": "10px",
+            "border-radius": "4px",
+            "max-height": "400px",
+            "overflow-y": "auto",
+            "white-space": "pre-wrap",
+            "font-family": "var(--font-monospace)",
+            "font-size": "0.85em",
+            "line-height": "1.4",
+            "border": "1px solid var(--background-modifier-border)"
+        });
 
         const buttonContainer = contentEl.createDiv({ cls: "hexo-execution-modal-buttons" });
-        buttonContainer.style.marginTop = "20px";
-        buttonContainer.style.display = "flex";
-        buttonContainer.style.justifyContent = "flex-end";
-        buttonContainer.style.gap = "10px";
+        buttonContainer.setCssProps({
+            "margin-top": "20px",
+            "display": "flex",
+            "justify-content": "flex-end",
+            "gap": "10px"
+        });
 
         this.stopButton = buttonContainer.createEl("button", {
             text: t('MODAL_EXECUTION_STOP'),
@@ -67,8 +71,9 @@ export class ExecutionModal extends Modal {
         const html = this.convert.toHtml(data);
         const span = document.createElement('span');
         if (type === 'stderr') {
-            span.style.color = 'var(--text-error)';
+            span.setCssProps({ 'color': 'var(--text-error)' });
         }
+        // eslint-disable-next-line @microsoft/sdl/no-inner-html
         span.innerHTML = html;
         this.logContainer.appendChild(span);
         this.logContainer.scrollTop = this.logContainer.scrollHeight;

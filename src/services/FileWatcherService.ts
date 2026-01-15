@@ -35,17 +35,17 @@ export class FileWatcherService {
         });
 
         this.watcher.on('unlink', (filePath) => {
-            this.handleUnlink(filePath);
+            void this.handleUnlink(filePath);
         });
 
-        this.watcher.on('unlinkDir', (dirPath) => {
+        this.watcher.on('unlinkDir', (_dirPath) => {
             // Optional: handle directory deletion if assets are stored there
         });
     }
 
     stop() {
         if (this.watcher) {
-            this.watcher.close();
+            void this.watcher.close();
             this.watcher = null;
         }
     }
@@ -65,7 +65,7 @@ export class FileWatcherService {
 
             try {
                 await fs.access(hexoFilePath);
-            } catch (error) {
+            } catch {
                 // File doesn't exist in Hexo
                 keysToRemove.push(obsidianPath);
             }
@@ -115,7 +115,7 @@ export class FileWatcherService {
 
             if (file instanceof TFile) {
                 try {
-                    await this.app.fileManager.processFrontMatter(file, (fm) => {
+                    await this.app.fileManager.processFrontMatter(file, (fm: { [key: string]: unknown }) => {
                         fm.published = false;
                     });
                     updatedCount++;

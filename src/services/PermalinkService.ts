@@ -16,17 +16,19 @@ export class PermalinkService {
     async generatePermalink(text: string): Promise<string> {
         let result = "";
         switch (this.settings.slugStyle) {
-            case 'hash':
+            case 'hash': {
                 const hash = await this.computeHash(text);
                 result = hash.substring(0, 8);
                 break;
+            }
             case 'pinyin':
                 result = this.convertToPinyinInitials(text);
                 break;
-            case 'translate':
+            case 'translate': {
                 const translated = await this.translateWithBaidu(text);
                 result = translated ? this.postProcessPermalink(translated) : "";
                 break;
+            }
             case 'title':
                 result = this.postProcessPermalink(text);
                 break;
@@ -43,7 +45,7 @@ export class PermalinkService {
 
     async translateWithBaidu(text: string): Promise<string> {
         if (!this.settings.baiduAppId || !this.settings.baiduApiKey) {
-            new Notice('Error: Baidu AppID or API Key not configured.');
+            new Notice('Baidu app ID or API key not configured');
             return "";
         }
 
@@ -55,20 +57,24 @@ export class PermalinkService {
             const url = `https://fanyi-api.baidu.com/api/trans/vip/translate?q=${encodeURIComponent(text)}&from=zh&to=en&appid=${this.settings.baiduAppId}&salt=${salt}&sign=${sign}`;
 
             const response = await requestUrl({ url });
-            const data = response.json;
+            const data = response.json as {
+                error_code?: number;
+                error_msg?: string;
+                trans_result?: Array<{ dst: string }>;
+            };
 
             if (data.error_code) {
-                console.error('Baidu Translate Error:', data);
-                new Notice(`Baidu Translate Error: ${data.error_msg}`);
+                console.error('Baidu translate error:', data);
+                new Notice(`Baidu translate error: ${data.error_msg}`);
                 return "";
             }
 
             if (data.trans_result && data.trans_result.length > 0) {
-                return data.trans_result[0].dst;
+                return data.trans_result[0]?.dst || "";
             }
         } catch (error) {
             console.error('Translation failed:', error);
-            new Notice('Translation failed. Check console for details.');
+            new Notice('Translation failed, check console for details');
         }
         return "";
     }

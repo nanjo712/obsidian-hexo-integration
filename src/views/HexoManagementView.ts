@@ -31,11 +31,12 @@ export class HexoManagementView extends ItemView {
         contentEl.addClass("hexo-management-view");
 
         this.registerEvent(this.app.vault.on("modify", (file) => {
-            if (file instanceof TFile && file.extension === 'md') this.render();
+            if (file instanceof TFile && file.extension === 'md') { void this.render(); }
         }));
-        this.registerEvent(this.app.vault.on("rename", () => this.render()));
-        this.registerEvent(this.app.vault.on("delete", () => this.render()));
-        this.registerEvent(this.app.workspace.on("hexo-integration:sync-change" as any, () => this.render()));
+        this.registerEvent(this.app.vault.on("rename", () => { void this.render(); }));
+        this.registerEvent(this.app.vault.on("delete", () => { void this.render(); }));
+        // @ts-ignore
+        this.registerEvent(this.app.workspace.on("hexo-integration:sync-change", () => { void this.render(); }));
 
         await this.render();
     }
@@ -132,10 +133,10 @@ export class HexoManagementView extends ItemView {
             const name = cardHeader.createDiv({ text: file.basename, cls: "hexo-post-title" });
             name.onclick = (e) => {
                 e.stopPropagation();
-                this.app.workspace.getLeaf().openFile(file);
+                void this.app.workspace.getLeaf().openFile(file);
             };
 
-            const badge = cardHeader.createSpan({
+            cardHeader.createSpan({
                 text: type === 'modified' ? t('DASHBOARD_BADGE_MODIFIED') : (type === 'new' ? t('DASHBOARD_BADGE_DRAFT') : t('DASHBOARD_BADGE_PUBLISHED')),
                 cls: `hexo-status-badge ${type}`
             });
@@ -146,10 +147,10 @@ export class HexoManagementView extends ItemView {
                 setIcon(publishBtn, "upload");
                 publishBtn.onclick = async (e) => {
                     e.stopPropagation();
-                    await this.plugin.postService.publishPost(file, async () => {
+                    void this.plugin.postService.publishPost(file, async () => {
                         await this.plugin.saveSettings();
-                        this.plugin.updateStatusBar();
-                        this.render();
+                        await this.plugin.updateStatusBar();
+                        await this.render();
                     });
                 };
             }
@@ -157,6 +158,11 @@ export class HexoManagementView extends ItemView {
     }
 
     async bulkPublish(files: TFile[]) {
+        if (!this.plugin.settings.baiduAppId || !this.plugin.settings.baiduApiKey) {
+            new Notice('Baidu app ID or API key not configured');
+            return;
+        }
+
         if (files.length === 0) {
             new Notice(t('NOTICE_NO_POSTS_TO_PUBLISH'));
             return;
@@ -172,8 +178,8 @@ export class HexoManagementView extends ItemView {
                 console.error(`Failed to publish ${file.path}:`, e);
             }
         }
-        this.plugin.updateStatusBar();
-        this.render();
+        void this.plugin.updateStatusBar();
+        void this.render();
         new Notice(t('NOTICE_BULK_PUBLISH_COMPLETED'));
     }
 

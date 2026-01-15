@@ -9,7 +9,6 @@ import * as fs from 'fs';
 import * as pathNode from 'path';
 import { AssetCleanupModal, UnusedAsset } from '../modals/AssetCleanupModal';
 import { t } from '../i18n/helpers';
-import { UnusedAsset as UnusedAssetItem } from '../modals/AssetCleanupModal';
 
 export class PostService {
     constructor(
@@ -90,7 +89,7 @@ published: false
 
     async convertToHexo(file: TFile) {
         const generatedPermalink = await this.permalinkService.generatePermalink(file.basename);
-        await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+        await this.app.fileManager.processFrontMatter(file, (frontmatter: Record<string, unknown>) => {
             if (!frontmatter.title) frontmatter.title = file.basename;
             if (!frontmatter.permalink) frontmatter.permalink = generatedPermalink;
             if (!frontmatter.date) frontmatter.date = this.getFormattedDate();
@@ -105,6 +104,10 @@ published: false
             new Notice(t('NOTICE_HEXO_ROOT_NOT_SET'));
             return;
         }
+        if (!this.settings.baiduAppId || !this.settings.baiduApiKey) {
+            new Notice('Baidu app ID or API key not configured');
+            return;
+        }
 
         const cache = this.app.metadataCache.getFileCache(file);
         let frontmatter = cache?.frontmatter;
@@ -115,7 +118,7 @@ published: false
             await this.convertToHexo(file);
         }
 
-        await this.app.fileManager.processFrontMatter(file, (fm) => {
+        await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
             fm.published = true;
         });
 
@@ -145,8 +148,8 @@ published: false
             // Handle cover image
             const coverField = this.settings.coverFieldName || 'cover';
             if (frontmatter && frontmatter[coverField]) {
-                const coverValue = frontmatter[coverField];
-                const newCoverValue = await this.imageService.handleCoverImage(file, String(coverValue), processedFiles);
+                const coverValue = frontmatter[coverField] as string;
+                const newCoverValue = await this.imageService.handleCoverImage(file, coverValue, processedFiles);
                 if (newCoverValue) {
                     // Update only the published content's frontmatter (non-destructive to original file)
                     const coverRegex = new RegExp(`^${coverField}:.*$`, 'm');
@@ -161,14 +164,15 @@ published: false
                 content = this.applyAutoExcerpt(content);
             }
 
-            fs.writeFileSync(pathNode.join(targetDir, hexoFileName as string), content);
-            new Notice(t('NOTICE_PUBLISH_SUCCESS', { fileName: file.name, hexoName: hexoFileName as string }));
+            fs.writeFileSync(pathNode.join(targetDir, hexoFileName), content);
+            new Notice(t('NOTICE_PUBLISH_SUCCESS', { fileName: file.name, hexoName: hexoFileName }));
 
             this.settings.postHashes[file.path] = await this.syncService.computeHash(originalContent);
             await onComplete();
-        } catch (error: any) {
+        } catch (error) {
             console.error(error);
-            new Notice(t('NOTICE_PUBLISH_ERROR', { message: error.message }));
+            const message = error instanceof Error ? error.message : String(error);
+            new Notice(t('NOTICE_PUBLISH_ERROR', { message }));
         }
     }
 
@@ -205,9 +209,10 @@ published: false
 
             delete this.settings.postHashes[oldPath];
             delete this.settings.pathMapping[oldPath];
-        } catch (error: any) {
+        } catch (error) {
             console.error('Hexo Integration: Rename sync failed', error);
-            new Notice(t('NOTICE_RENAME_ERROR', { message: error.message }));
+            const message = error instanceof Error ? error.message : String(error);
+            new Notice(t('NOTICE_RENAME_ERROR', { message }));
         }
     }
 

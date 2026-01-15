@@ -60,7 +60,7 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.hexoRoot = value;
                     await this.plugin.saveSettings();
-                    this.plugin.fileWatcherService.start();
+                    void this.plugin.fileWatcherService.start();
                 }));
 
         new Setting(containerEl)
@@ -95,7 +95,7 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
             .setName(t('SETTINGS_COVER_FIELD'))
             .setDesc(t('SETTINGS_COVER_FIELD_DESC'))
             .addText(text => text
-                .setPlaceholder('cover')
+                .setPlaceholder('Property name for cover')
                 .setValue(this.plugin.settings.coverFieldName)
                 .onChange(async (value) => {
                     this.plugin.settings.coverFieldName = value;
@@ -136,7 +136,7 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                     }
                 }));
 
-        containerEl.createEl('h3', { text: t('SETTINGS_HEADER_IMAGE_OPTIMIZATION') });
+        new Setting(containerEl).setHeading().setName(t('SETTINGS_HEADER_IMAGE_OPTIMIZATION'));
 
         new Setting(containerEl)
             .setName(t('SETTINGS_COMPRESS_IMAGES'))
@@ -164,7 +164,7 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
         }
 
         if (this.plugin.settings.slugStyle === 'translate') {
-            containerEl.createEl('h3', { text: t('SETTINGS_HEADER_BAIDU_TRANSLATE') });
+            new Setting(containerEl).setHeading().setName(t('SETTINGS_HEADER_BAIDU_TRANSLATE'));
 
             new Setting(containerEl)
                 .setName(t('SETTINGS_BAIDU_APP_ID'))
@@ -186,7 +186,7 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
         }
 
         if (this.plugin.settings.slugStyle === 'translate' || this.plugin.settings.slugStyle === 'title') {
-            containerEl.createEl('h3', { text: t('SETTINGS_HEADER_PERMALINK_POST_PROCESSING') });
+            new Setting(containerEl).setHeading().setName(t('SETTINGS_HEADER_PERMALINK_POST_PROCESSING'));
 
             new Setting(containerEl)
                 .setName(t('SETTINGS_REMOVE_STOP_WORDS'))

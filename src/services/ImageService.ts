@@ -1,4 +1,4 @@
-import { App, TFile, Notice } from 'obsidian';
+import { App, TFile } from 'obsidian';
 import { HexoIntegrationSettings } from '../settings';
 import * as fs from 'fs';
 import * as pathNode from 'path';
@@ -26,7 +26,7 @@ export class ImageService {
 
                 // Handle Wikilinks: ![[image.png|alt]]
                 const wikiRegex = new RegExp(`!\\[\\[${escapedLink}(\\|(.*?))?\\]\\]`, 'g');
-                updatedContent = updatedContent.replace(wikiRegex, (match, p1, altText) => {
+                updatedContent = updatedContent.replace(wikiRegex, (_match, _p1, altText: string | undefined) => {
                     const finalAlt = altText || "";
                     return this.settings.imageSyntax === 'markdown'
                         ? `![${finalAlt}](${finalFilename})`
@@ -35,7 +35,7 @@ export class ImageService {
 
                 // Handle Markdown links: ![alt](image.png)
                 const mdRegex = new RegExp(`!\\[(.*?)\\]\\(${escapedLink}\\)`, 'g');
-                updatedContent = updatedContent.replace(mdRegex, (match, altText) => {
+                updatedContent = updatedContent.replace(mdRegex, (_match, altText: string | undefined) => {
                     const finalAlt = altText || "";
                     return this.settings.imageSyntax === 'markdown'
                         ? `![${finalAlt}](${finalFilename})`
@@ -75,10 +75,12 @@ export class ImageService {
             if (this.settings.compressImages) {
                 const buffer = await this.app.vault.readBinary(linkedFile);
                 const compressed = await this.compressToWebP(buffer, this.settings.webpQuality / 100);
-                fs.writeFileSync(targetPath, Buffer.from(compressed));
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+                fs.writeFileSync(targetPath, (window as any).Buffer.from(compressed));
             } else {
                 const imageContent = await this.app.vault.readBinary(linkedFile);
-                fs.writeFileSync(targetPath, Buffer.from(imageContent));
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+                fs.writeFileSync(targetPath, (window as any).Buffer.from(imageContent));
             }
             processedFiles.add(finalName);
         }
@@ -106,16 +108,16 @@ export class ImageService {
                 canvas.toBlob((resultBlob) => {
                     URL.revokeObjectURL(url);
                     if (resultBlob) {
-                        resultBlob.arrayBuffer().then(resolve).catch(reject);
+                        void resultBlob.arrayBuffer().then(resolve).catch(reject);
                     } else {
                         reject(new Error('Failed to compress image to WebP'));
                     }
                 }, 'image/webp', quality);
             };
 
-            img.onerror = (err) => {
+            img.onerror = () => {
                 URL.revokeObjectURL(url);
-                reject(err);
+                reject(new Error('Failed to load image for compression'));
             };
 
             img.src = url;
@@ -140,7 +142,6 @@ export class ImageService {
         const usedImages = new Set<string>();
 
         // 1. Check content for used images
-        let content = await this.app.vault.read(file);
         const cache = this.app.metadataCache.getFileCache(file);
         const embeds = cache?.embeds || [];
 

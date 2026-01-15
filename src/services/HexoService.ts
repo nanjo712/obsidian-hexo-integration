@@ -25,7 +25,7 @@ export class HexoService {
 
         if (modal) {
             modal.onAbort = () => {
-                if (process.platform === 'win32') {
+                if (window.process.platform === 'win32') {
                     spawn('taskkill', ['/F', '/T', '/PID', child.pid?.toString() || ''], { shell: true });
                 } else {
                     child.kill('SIGINT');
@@ -34,13 +34,13 @@ export class HexoService {
             };
         }
 
-        child.stdout.on('data', (data) => {
+        child.stdout.on('data', (data: { toString: () => string }) => {
             const output = data.toString();
-            console.log(`stdout: ${output}`);
+            console.debug(`stdout: ${output}`);
             if (modal) modal.appendLog(output);
         });
 
-        child.stderr.on('data', (data) => {
+        child.stderr.on('data', (data: { toString: () => string }) => {
             const output = data.toString();
             console.error(`stderr: ${output}`);
             if (modal) modal.appendLog(output, 'stderr');

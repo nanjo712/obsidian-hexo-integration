@@ -1,6 +1,4 @@
-import { App, Modal, Setting, Notice } from 'obsidian';
-import * as fs from 'fs';
-import * as pathNode from 'path';
+import { App, Modal, Setting } from 'obsidian';
 import { t } from '../i18n/helpers';
 
 export interface UnusedAsset {
@@ -32,20 +30,25 @@ export class AssetCleanupModal extends Modal {
         contentEl.createEl('p', { text: t('MODAL_CLEANUP_CONFIRM', { count: String(this.unusedAssets.length) }) });
 
         const listContainer = contentEl.createDiv({ cls: 'hexo-cleanup-list' });
-        listContainer.style.maxHeight = '300px';
-        listContainer.style.overflowY = 'auto';
-        listContainer.style.border = '1px solid var(--background-modifier-border)';
-        listContainer.style.padding = '8px';
-        listContainer.style.marginBottom = '16px';
+        listContainer.setCssProps({
+            'max-height': '300px',
+            'overflow-y': 'auto',
+            'border': '1px solid var(--background-modifier-border)',
+            'padding': '8px',
+            'margin-bottom': '16px'
+        });
 
         this.unusedAssets.forEach(asset => {
             const item = listContainer.createDiv();
-            item.style.display = 'flex';
-            item.style.justifyContent = 'space-between';
-            item.style.padding = '4px 0';
+            item.setCssProps({
+                'display': 'flex',
+                'justify-content': 'space-between',
+                'padding': '4px 0'
+            });
 
             item.createSpan({ text: asset.fileName, cls: 'hexo-cleanup-filename' });
-            item.createSpan({ text: `(${asset.noteTitle})`, cls: 'hexo-cleanup-note' }).style.color = 'var(--text-muted)';
+            const noteEl = item.createSpan({ text: `(${asset.noteTitle})`, cls: 'hexo-cleanup-note' });
+            noteEl.setCssProps({ 'color': 'var(--text-muted)' });
         });
 
         new Setting(contentEl)

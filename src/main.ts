@@ -1,4 +1,4 @@
-import { App, Modal, Notice, Plugin, TFile, TAbstractFile, SuggestModal, addIcon, setIcon, WorkspaceLeaf } from 'obsidian';
+import { App, Notice, Plugin, TFile, SuggestModal, addIcon, setIcon, WorkspaceLeaf } from 'obsidian';
 import { DEFAULT_SETTINGS, HexoIntegrationSettings, HexoIntegrationSettingTab } from "./settings";
 import { PermalinkService } from './services/PermalinkService';
 import { HexoService } from './services/HexoService';
@@ -34,7 +34,7 @@ export default class HexoIntegration extends Plugin {
         this.filenameService = new FilenameService(this.app);
         const linkService = new LinkService(this.app);
         this.postService = new PostService(this.app, this.settings, this.permalinkService, this.syncService, this.imageService, linkService, this.filenameService);
-        this.fileWatcherService = new FileWatcherService(this.app, this.settings, () => this.updateStatusBar());
+        this.fileWatcherService = new FileWatcherService(this.app, this.settings, () => { void this.updateStatusBar(); });
 
         // Register custom Hexo icon
         addIcon('hexo-logo', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.02 0L1.596 6.02l-.02 12L11.978 24l10.426-6.02.02-12zm4.828 17.14l-.96.558-.969-.574V12.99H9.081v4.15l-.96.558-.969-.574V6.854l.964-.552.965.563v4.145h5.838V6.86l.965-.552.964.563z"/></svg>');
@@ -46,9 +46,9 @@ export default class HexoIntegration extends Plugin {
         this.statusBarItemEl.onClickEvent(async () => {
             const activeFile = this.app.workspace.getActiveFile();
             if (activeFile) {
-                await this.postService.publishPost(activeFile, async () => {
+                void this.postService.publishPost(activeFile, async () => {
                     await this.saveSettings();
-                    this.updateStatusBar();
+                    await this.updateStatusBar();
                 });
             }
         });
@@ -63,7 +63,7 @@ export default class HexoIntegration extends Plugin {
         this.addCommand({
             id: 'create-hexo-post',
             name: t('COMMAND_CREATE_POST'),
-            callback: () => this.postService.createHexoPost()
+            callback: () => { void this.postService.createHexoPost(); }
         });
 
         this.addCommand({
@@ -71,7 +71,7 @@ export default class HexoIntegration extends Plugin {
             name: t('COMMAND_CONVERT'),
             callback: () => {
                 const activeFile = this.app.workspace.getActiveFile();
-                if (activeFile) this.postService.convertToHexo(activeFile);
+                if (activeFile) { void this.postService.convertToHexo(activeFile); }
             }
         });
 
@@ -81,9 +81,9 @@ export default class HexoIntegration extends Plugin {
             callback: async () => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) {
-                    await this.postService.publishPost(activeFile, async () => {
+                    void this.postService.publishPost(activeFile, async () => {
                         await this.saveSettings();
-                        this.updateStatusBar();
+                        await this.updateStatusBar();
                     });
                 }
             }
@@ -92,19 +92,19 @@ export default class HexoIntegration extends Plugin {
         this.addCommand({
             id: 'hexo-generate',
             name: t('COMMAND_GENERATE'),
-            callback: () => this.hexoService.hexoGenerate()
+            callback: () => { void this.hexoService.hexoGenerate(); }
         });
 
         this.addCommand({
             id: 'hexo-server',
             name: t('COMMAND_SERVER'),
-            callback: () => this.hexoService.hexoServer()
+            callback: () => { void this.hexoService.hexoServer(); }
         });
 
         this.addCommand({
             id: 'hexo-deploy',
             name: t('COMMAND_DEPLOY'),
-            callback: () => this.hexoService.hexoDeploy()
+            callback: () => { void this.hexoService.hexoDeploy(); }
         });
 
         this.addCommand({
@@ -115,7 +115,7 @@ export default class HexoIntegration extends Plugin {
                 if (activeFile) {
                     const generatedPermalink = await this.permalinkService.generatePermalink(activeFile.basename);
                     if (generatedPermalink) {
-                        await this.app.fileManager.processFrontMatter(activeFile, (fm) => {
+                        await this.app.fileManager.processFrontMatter(activeFile, (fm: { [key: string]: unknown }) => {
                             fm.permalink = generatedPermalink;
                         });
                         new Notice(t('NOTICE_GEN_PERMALINK', { permalink: generatedPermalink }));
@@ -131,7 +131,7 @@ export default class HexoIntegration extends Plugin {
         this.addCommand({
             id: 'open-hexo-management-view',
             name: t('COMMAND_OPEN_VIEW'),
-            callback: () => this.activateView(),
+            callback: () => { void this.activateView(); },
         });
 
         this.addCommand({
@@ -139,32 +139,34 @@ export default class HexoIntegration extends Plugin {
             name: t('COMMAND_CLEAN_ACTIVE'),
             callback: () => {
                 const activeFile = this.app.workspace.getActiveFile();
-                if (activeFile) this.postService.cleanAssets(activeFile);
+                if (activeFile) { void this.postService.cleanAssets(activeFile); }
             }
         });
 
         this.addCommand({
             id: 'clean-all-assets',
             name: t('COMMAND_CLEAN_ALL'),
-            callback: () => this.postService.cleanAllAssets()
+            callback: () => { void this.postService.cleanAllAssets(); }
         });
 
-        this.registerEvent(this.app.workspace.on('file-open', () => this.updateStatusBar()));
+        this.registerEvent(this.app.workspace.on('file-open', () => { void this.updateStatusBar(); }));
         this.registerEvent(this.app.vault.on('modify', (file) => {
             if (file instanceof TFile && file === this.app.workspace.getActiveFile()) {
-                this.updateStatusBar();
+                void this.updateStatusBar();
             }
         }));
-        this.registerEvent(this.app.vault.on('rename', async (file, oldPath) => {
+        this.registerEvent(this.app.vault.on('rename', (file, oldPath) => {
             if (file instanceof TFile) {
-                await this.postService.syncRename(file, oldPath);
-                await this.saveSettings();
-                this.updateStatusBar();
+                void (async () => {
+                    await this.postService.syncRename(file, oldPath);
+                    await this.saveSettings();
+                    await this.updateStatusBar();
+                })();
             }
         }));
-        this.registerEvent(this.app.vault.on('delete', () => this.updateStatusBar()));
+        this.registerEvent(this.app.vault.on('delete', () => { void this.updateStatusBar(); }));
 
-        this.updateStatusBar();
+        void this.updateStatusBar();
     }
 
     onunload() {
@@ -175,13 +177,15 @@ export default class HexoIntegration extends Plugin {
         const file = this.app.workspace.getActiveFile();
         if (!file || file.extension !== 'md' || !this.syncService.isHexoFormat(file)) {
             this.statusBarItemEl.empty();
-            this.statusBarItemEl.style.display = 'none';
+            this.statusBarItemEl.setCssProps({ 'display': 'none' });
             return;
         }
 
         const status = await this.syncService.getSyncStatus(file);
-        this.statusBarItemEl.style.display = 'inline-flex';
-        this.statusBarItemEl.style.alignItems = 'center';
+        this.statusBarItemEl.setCssProps({
+            'display': 'inline-flex',
+            'align-items': 'center'
+        });
         this.statusBarItemEl.empty();
 
         let icon = 'circle';
@@ -199,24 +203,30 @@ export default class HexoIntegration extends Plugin {
         }
 
         const container = this.statusBarItemEl.createSpan({ cls: 'hexo-status-bar-container' });
-        container.style.display = 'flex';
-        container.style.alignItems = 'center';
-        container.style.gap = '4px';
+        container.setCssProps({
+            'display': 'flex',
+            'align-items': 'center',
+            'gap': '4px'
+        });
 
         const iconEl = container.createSpan();
         setIcon(iconEl, icon);
-        iconEl.style.color = `var(${color})`;
-        iconEl.style.display = 'flex';
-        iconEl.style.alignItems = 'center';
+        iconEl.setCssProps({
+            'color': `var(${color})`,
+            'display': 'flex',
+            'align-items': 'center'
+        });
 
         const textEl = container.createSpan();
         textEl.setText(statusText);
-        textEl.style.fontSize = '0.8em';
-        textEl.style.color = `var(${color})`;
+        textEl.setCssProps({
+            'font-size': '0.8em',
+            'color': `var(${color})`
+        });
     }
 
     async loadSettings() {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, (await this.loadData()) as object);
     }
 
     async saveSettings() {
@@ -240,7 +250,7 @@ export default class HexoIntegration extends Plugin {
         }
 
         if (leaf) {
-            workspace.revealLeaf(leaf);
+            void workspace.revealLeaf(leaf);
         }
     }
 }
@@ -263,19 +273,19 @@ class HexoCommandModal extends SuggestModal<HexoCommand> {
         const commands = [
             {
                 label: t('COMMAND_PUBLISH_POST'),
-                callback: async () => {
+                callback: () => {
                     const activeFile = this.app.workspace.getActiveFile();
                     if (activeFile) {
-                        await this.plugin.postService.publishPost(activeFile, async () => {
+                        void this.plugin.postService.publishPost(activeFile, async () => {
                             await this.plugin.saveSettings();
-                            this.plugin.updateStatusBar();
+                            await this.plugin.updateStatusBar();
                         });
                     }
                 }
             },
             {
                 label: t('COMMAND_OPEN_VIEW'),
-                callback: () => this.plugin.activateView()
+                callback: () => { void this.plugin.activateView(); }
             },
             {
                 label: t('COMMAND_GENERATE'),
@@ -291,40 +301,42 @@ class HexoCommandModal extends SuggestModal<HexoCommand> {
             },
             {
                 label: t('COMMAND_GEN_PERMALINK'),
-                callback: async () => {
-                    const activeFile = this.app.workspace.getActiveFile();
-                    if (activeFile) {
-                        const generatedPermalink = await this.plugin.permalinkService.generatePermalink(activeFile.basename);
-                        if (generatedPermalink) {
-                            await this.app.fileManager.processFrontMatter(activeFile, (fm) => {
-                                fm.permalink = generatedPermalink;
-                            });
-                            new Notice(t('NOTICE_GEN_PERMALINK', { permalink: generatedPermalink }));
+                callback: () => {
+                    void (async () => {
+                        const activeFile = this.app.workspace.getActiveFile();
+                        if (activeFile) {
+                            const generatedPermalink = await this.plugin.permalinkService.generatePermalink(activeFile.basename);
+                            if (generatedPermalink) {
+                                await this.app.fileManager.processFrontMatter(activeFile, (fm: { [key: string]: unknown }) => {
+                                    fm.permalink = generatedPermalink;
+                                });
+                                new Notice(t('NOTICE_GEN_PERMALINK', { permalink: generatedPermalink }));
+                            }
                         }
-                    }
+                    })();
                 }
             },
             {
                 label: t('COMMAND_CREATE_POST'),
-                callback: () => this.plugin.postService.createHexoPost()
+                callback: () => { void this.plugin.postService.createHexoPost(); }
             },
             {
                 label: t('COMMAND_CONVERT'),
                 callback: () => {
                     const activeFile = this.app.workspace.getActiveFile();
-                    if (activeFile) this.plugin.postService.convertToHexo(activeFile);
+                    if (activeFile) { void this.plugin.postService.convertToHexo(activeFile); }
                 }
             },
             {
                 label: t('COMMAND_CLEAN_ACTIVE'),
                 callback: () => {
                     const activeFile = this.app.workspace.getActiveFile();
-                    if (activeFile) this.plugin.postService.cleanAssets(activeFile);
+                    if (activeFile) { void this.plugin.postService.cleanAssets(activeFile); }
                 }
             },
             {
                 label: t('COMMAND_CLEAN_ALL'),
-                callback: () => this.plugin.postService.cleanAllAssets()
+                callback: () => { void this.plugin.postService.cleanAllAssets(); }
             }
         ];
 

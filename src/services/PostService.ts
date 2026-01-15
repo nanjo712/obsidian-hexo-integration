@@ -124,6 +124,14 @@ published: false
                 return;
             }
 
+            // Determine target Hexo filename
+            let hexoFileName = this.settings.pathMapping[file.path];
+            if (!hexoFileName) {
+                const sanitized = this.filenameService.sanitize(file.name);
+                hexoFileName = this.filenameService.getUniqueFilename(targetDir, sanitized);
+                this.settings.pathMapping[file.path] = hexoFileName;
+            }
+
             let content = await this.app.vault.read(file);
             const originalContent = content;
 
@@ -148,15 +156,7 @@ published: false
                 content = this.applyAutoExcerpt(content);
             }
 
-            // Determine target Hexo filename
-            let hexoFileName = this.settings.pathMapping[file.path];
-            if (!hexoFileName) {
-                const sanitized = this.filenameService.sanitize(file.name);
-                hexoFileName = this.filenameService.getUniqueFilename(targetDir, sanitized);
-                this.settings.pathMapping[file.path] = hexoFileName;
-            }
-
-            fs.writeFileSync(pathNode.join(targetDir, hexoFileName), content);
+            fs.writeFileSync(pathNode.join(targetDir, hexoFileName as string), content);
             new Notice(`Published ${file.name} to Hexo as ${hexoFileName}.`);
 
             this.settings.postHashes[file.path] = await this.syncService.computeHash(originalContent);

@@ -8,6 +8,8 @@ import { FilenameService } from './FilenameService';
 import * as fs from 'fs';
 import * as pathNode from 'path';
 import { AssetCleanupModal, UnusedAsset } from '../modals/AssetCleanupModal';
+import { t } from '../i18n/helpers';
+import { UnusedAsset as UnusedAssetItem } from '../modals/AssetCleanupModal';
 
 export class PostService {
     constructor(
@@ -95,12 +97,12 @@ published: false
             if (!frontmatter.tags) frontmatter.tags = [];
             if (frontmatter.published === undefined) frontmatter.published = false;
         });
-        new Notice(`Converted ${file.name} to Hexo format.`);
+        new Notice(t('NOTICE_CONVERT_SUCCESS', { fileName: file.name }));
     }
 
     async publishPost(file: TFile, onComplete: () => Promise<void>) {
         if (!this.settings.hexoRoot) {
-            new Notice('Error: Hexo root directory not configured.');
+            new Notice(t('NOTICE_HEXO_ROOT_NOT_SET'));
             return;
         }
 
@@ -120,16 +122,19 @@ published: false
         try {
             const targetDir = pathNode.join(this.settings.hexoRoot, 'source', '_posts');
             if (!fs.existsSync(targetDir)) {
-                new Notice(`Error: Target directory ${targetDir} does not exist.`);
+                new Notice(t('NOTICE_TARGET_DIR_NOT_EXIST', { targetDir }));
                 return;
             }
 
             // Determine target Hexo filename
-            let hexoFileName = this.settings.pathMapping[file.path];
-            if (!hexoFileName) {
+            let hexoFileName: string;
+            const existingMapping = this.settings.pathMapping[file.path];
+            if (!existingMapping) {
                 const sanitized = this.filenameService.sanitize(file.name);
                 hexoFileName = this.filenameService.getUniqueFilename(targetDir, sanitized);
                 this.settings.pathMapping[file.path] = hexoFileName;
+            } else {
+                hexoFileName = existingMapping;
             }
 
             let content = await this.app.vault.read(file);
@@ -157,13 +162,13 @@ published: false
             }
 
             fs.writeFileSync(pathNode.join(targetDir, hexoFileName as string), content);
-            new Notice(`Published ${file.name} to Hexo as ${hexoFileName}.`);
+            new Notice(t('NOTICE_PUBLISH_SUCCESS', { fileName: file.name, hexoName: hexoFileName as string }));
 
             this.settings.postHashes[file.path] = await this.syncService.computeHash(originalContent);
             await onComplete();
         } catch (error: any) {
             console.error(error);
-            new Notice(`Error publishing: ${error.message}`);
+            new Notice(t('NOTICE_PUBLISH_ERROR', { message: error.message }));
         }
     }
 
@@ -191,7 +196,7 @@ published: false
 
             if (fs.existsSync(oldHexoPath)) {
                 fs.renameSync(oldHexoPath, newHexoPath);
-                new Notice(`Renamed Hexo post to ${newHexoFileName}`);
+                new Notice(t('NOTICE_RENAME_SUCCESS', { fileName: newHexoFileName }));
             }
 
             // Update mapping and hashes
@@ -202,13 +207,13 @@ published: false
             delete this.settings.pathMapping[oldPath];
         } catch (error: any) {
             console.error('Hexo Integration: Rename sync failed', error);
-            new Notice(`Failed to rename Hexo post: ${error.message}`);
+            new Notice(t('NOTICE_RENAME_ERROR', { message: error.message }));
         }
     }
 
     async cleanAssets(file: TFile) {
         if (!this.syncService.isHexoFormat(file)) {
-            new Notice('File is not in Hexo format.');
+            new Notice(t('NOTICE_NOT_HEXO_FORMAT'));
             return;
         }
 
@@ -216,11 +221,11 @@ published: false
         const assetDir = this.imageService.getAssetFolderPath(file);
 
         if (unused.length === 0 || !assetDir) {
-            new Notice(`No unused images found for ${file.basename}.`);
+            new Notice(t('NOTICE_NO_UNUSED_ASSETS', { fileName: file.basename }));
             return;
         }
 
-        const items: UnusedAsset[] = unused.map(name => ({
+        const items: UnusedAsset[] = unused.map((name: string) => ({
             fileName: name,
             filePath: pathNode.join(assetDir, name),
             noteTitle: file.basename
@@ -228,7 +233,7 @@ published: false
 
         new AssetCleanupModal(this.app, items, async () => {
             items.forEach(item => fs.unlinkSync(item.filePath));
-            new Notice(`Deleted ${items.length} unused images for ${file.basename}.`);
+            new Notice(t('NOTICE_DELETE_ASSETS_SUCCESS', { count: String(items.length), fileName: file.basename }));
         }).open();
     }
 
@@ -236,14 +241,14 @@ published: false
         const files = this.app.vault.getMarkdownFiles();
         let allUnused: UnusedAsset[] = [];
 
-        new Notice('Scanning for unused assets...');
+        new Notice(t('NOTICE_SCANNING_ASSETS'));
 
         for (const file of files) {
             if (this.syncService.isHexoFormat(file)) {
                 const unused = await this.imageService.getUnusedImages(file);
                 const assetDir = this.imageService.getAssetFolderPath(file);
                 if (assetDir && unused.length > 0) {
-                    allUnused = allUnused.concat(unused.map(name => ({
+                    allUnused = allUnused.concat(unused.map((name: string) => ({
                         fileName: name,
                         filePath: pathNode.join(assetDir, name),
                         noteTitle: file.basename
@@ -253,13 +258,13 @@ published: false
         }
 
         if (allUnused.length === 0) {
-            new Notice('No unused images found across all posts.');
+            new Notice(t('NOTICE_NO_UNUSED_ASSETS_GLOBAL'));
             return;
         }
 
         new AssetCleanupModal(this.app, allUnused, async () => {
             allUnused.forEach(item => fs.unlinkSync(item.filePath));
-            new Notice(`Cleanup completed: ${allUnused.length} images deleted.`);
+            new Notice(t('NOTICE_CLEANUP_COMPLETED', { count: String(allUnused.length) }));
         }).open();
     }
 }

@@ -1,5 +1,6 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import HexoIntegration from "./main";
+import { t } from "./i18n/helpers";
 
 export interface HexoIntegrationSettings {
     hexoRoot: string;
@@ -51,8 +52,8 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
         containerEl.empty();
 
         new Setting(containerEl)
-            .setName('Hexo Root Directory')
-            .setDesc('The absolute path to your Hexo blog root directory.')
+            .setName(t('SETTINGS_HEXO_ROOT'))
+            .setDesc(t('SETTINGS_HEXO_ROOT_DESC'))
             .addText(text => text
                 .setPlaceholder('/path/to/your/hexo/blog')
                 .setValue(this.plugin.settings.hexoRoot)
@@ -63,14 +64,14 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Permalink Style')
-            .setDesc('How to generate the permalink if it is missing when publishing.')
+            .setName(t('SETTINGS_PERMALINK_STYLE'))
+            .setDesc(t('SETTINGS_PERMALINK_STYLE_DESC'))
             .addDropdown(dropdown => dropdown
-                .addOption('translate', 'Baidu Translate')
-                .addOption('title', 'Note Title')
-                .addOption('pinyin', 'Pinyin Initials')
-                .addOption('hash', 'Short Hash')
-                .addOption('manual', 'Manual (Abort if missing)')
+                .addOption('translate', t('SETTINGS_SELECT_BAIDU'))
+                .addOption('title', t('SETTINGS_SELECT_TITLE'))
+                .addOption('pinyin', t('SETTINGS_SELECT_PINYIN'))
+                .addOption('hash', t('SETTINGS_SELECT_HASH'))
+                .addOption('manual', t('SETTINGS_SELECT_MANUAL'))
                 .setValue(this.plugin.settings.slugStyle)
                 .onChange(async (value: 'translate' | 'pinyin' | 'hash' | 'manual' | 'title') => {
                     this.plugin.settings.slugStyle = value;
@@ -79,11 +80,11 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Image Syntax')
-            .setDesc('How images should be referenced in the published post.')
+            .setName(t('SETTINGS_IMAGE_SYNTAX'))
+            .setDesc(t('SETTINGS_IMAGE_SYNTAX_DESC'))
             .addDropdown(dropdown => dropdown
-                .addOption('hexo', 'Hexo Tag ({% asset_img %})')
-                .addOption('markdown', 'Native Markdown (![]())')
+                .addOption('hexo', t('SETTINGS_SELECT_HEXO_TAG'))
+                .addOption('markdown', t('SETTINGS_SELECT_MARKDOWN_TAG'))
                 .setValue(this.plugin.settings.imageSyntax)
                 .onChange(async (value: 'hexo' | 'markdown') => {
                     this.plugin.settings.imageSyntax = value;
@@ -91,8 +92,8 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Cover Field Name')
-            .setDesc('Title of the frontmatter field for the cover image.')
+            .setName(t('SETTINGS_COVER_FIELD'))
+            .setDesc(t('SETTINGS_COVER_FIELD_DESC'))
             .addText(text => text
                 .setPlaceholder('cover')
                 .setValue(this.plugin.settings.coverFieldName)
@@ -102,8 +103,8 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Show Output Panel')
-            .setDesc('Show a real-time output panel when running Hexo commands (generate, deploy, etc.)')
+            .setName(t('SETTINGS_SHOW_OUTPUT'))
+            .setDesc(t('SETTINGS_SHOW_OUTPUT_DESC'))
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.showOutputModal)
                 .onChange(async (value) => {
@@ -112,8 +113,8 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Auto Excerpt')
-            .setDesc('Automatically insert <!--more--> after the first paragraph when publishing.')
+            .setName(t('SETTINGS_AUTO_EXCERPT'))
+            .setDesc(t('SETTINGS_AUTO_EXCERPT_DESC'))
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.autoExcerpt)
                 .onChange(async (value) => {
@@ -122,8 +123,8 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Hexo Server Port')
-            .setDesc('The port used by the Hexo preview server (default: 4000).')
+            .setName(t('SETTINGS_SERVER_PORT'))
+            .setDesc(t('SETTINGS_SERVER_PORT_DESC'))
             .addText(text => text
                 .setPlaceholder('4000')
                 .setValue(String(this.plugin.settings.serverPort))
@@ -135,11 +136,11 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                     }
                 }));
 
-        containerEl.createEl('h3', { text: 'Image Optimization' });
+        containerEl.createEl('h3', { text: t('SETTINGS_HEADER_IMAGE_OPTIMIZATION') });
 
         new Setting(containerEl)
-            .setName('Compress Images')
-            .setDesc('Automatically convert and compress images to WebP format when publishing.')
+            .setName(t('SETTINGS_COMPRESS_IMAGES'))
+            .setDesc(t('SETTINGS_COMPRESS_IMAGES_DESC'))
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.compressImages)
                 .onChange(async (value) => {
@@ -150,8 +151,8 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
 
         if (this.plugin.settings.compressImages) {
             new Setting(containerEl)
-                .setName('WebP Quality')
-                .setDesc('Compression quality for WebP (0-100).')
+                .setName(t('SETTINGS_WEBP_QUALITY'))
+                .setDesc(t('SETTINGS_WEBP_QUALITY_DESC'))
                 .addSlider(slider => slider
                     .setLimits(0, 100, 5)
                     .setValue(this.plugin.settings.webpQuality)
@@ -163,10 +164,10 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
         }
 
         if (this.plugin.settings.slugStyle === 'translate') {
-            containerEl.createEl('h3', { text: 'Baidu Translate Settings' });
+            containerEl.createEl('h3', { text: t('SETTINGS_HEADER_BAIDU_TRANSLATE') });
 
             new Setting(containerEl)
-                .setName('Baidu AppID')
+                .setName(t('SETTINGS_BAIDU_APP_ID'))
                 .addText(text => text
                     .setValue(this.plugin.settings.baiduAppId)
                     .onChange(async (value) => {
@@ -175,7 +176,7 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                     }));
 
             new Setting(containerEl)
-                .setName('Baidu API Key')
+                .setName(t('SETTINGS_BAIDU_API_KEY'))
                 .addText(text => text
                     .setValue(this.plugin.settings.baiduApiKey)
                     .onChange(async (value) => {
@@ -185,11 +186,11 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
         }
 
         if (this.plugin.settings.slugStyle === 'translate' || this.plugin.settings.slugStyle === 'title') {
-            containerEl.createEl('h3', { text: 'Permalink Post-Processing' });
+            containerEl.createEl('h3', { text: t('SETTINGS_HEADER_PERMALINK_POST_PROCESSING') });
 
             new Setting(containerEl)
-                .setName('Remove Stop Words')
-                .setDesc('Remove common English stop words (a, the, in, etc.)')
+                .setName(t('SETTINGS_REMOVE_STOP_WORDS'))
+                .setDesc(t('SETTINGS_REMOVE_STOP_WORDS_DESC'))
                 .addToggle(toggle => toggle
                     .setValue(this.plugin.settings.removeStopWords)
                     .onChange(async (value) => {
@@ -198,8 +199,8 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                     }));
 
             new Setting(containerEl)
-                .setName('Max Permalink Words')
-                .setDesc('Maximum number of words in the generated permalink.')
+                .setName(t('SETTINGS_MAX_PERMALINK_WORDS'))
+                .setDesc(t('SETTINGS_MAX_PERMALINK_WORDS_DESC'))
                 .addText(text => text
                     .setValue(String(this.plugin.settings.maxSlugWords))
                     .onChange(async (value) => {

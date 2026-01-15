@@ -1,5 +1,6 @@
 import { ItemView, WorkspaceLeaf, TFile, Notice, setIcon } from "obsidian";
 import HexoIntegration from "../main";
+import { t } from "../i18n/helpers";
 
 export const HEXO_VIEW_TYPE = "hexo-management-view";
 
@@ -17,7 +18,7 @@ export class HexoManagementView extends ItemView {
     }
 
     getDisplayText() {
-        return "Hexo Dashboard";
+        return t('DASHBOARD_TITLE');
     }
 
     getIcon() {
@@ -48,7 +49,7 @@ export class HexoManagementView extends ItemView {
             contentEl.empty();
 
             const header = contentEl.createDiv({ cls: "hexo-view-header" });
-            header.createEl("h4", { text: "Hexo Dashboard" });
+            header.createEl("h4", { text: t('DASHBOARD_TITLE') });
 
             const actions = contentEl.createDiv({ cls: "hexo-view-actions" });
 
@@ -56,23 +57,23 @@ export class HexoManagementView extends ItemView {
             const pendingCount = posts.drafts.length + posts.unsynced.length;
 
             const bulkPublishBtn = actions.createEl("button", {
-                text: `Bulked Publish (${pendingCount})`,
+                text: t('DASHBOARD_BULK_PUBLISH', { count: String(pendingCount) }),
                 cls: "mod-cta"
             });
             setIcon(bulkPublishBtn, "zap");
             bulkPublishBtn.disabled = pendingCount === 0;
             bulkPublishBtn.onclick = () => this.bulkPublish([...posts.unsynced, ...posts.drafts]);
 
-            const refreshBtn = actions.createEl("button", { text: "Refresh" });
+            const refreshBtn = actions.createEl("button", { text: t('DASHBOARD_REFRESH') });
             setIcon(refreshBtn, "refresh-cw");
             refreshBtn.onclick = () => this.render();
 
             if (posts.unsynced.length === 0 && posts.drafts.length === 0 && posts.published.length === 0) {
                 this.renderEmptyState(contentEl);
             } else {
-                this.renderSection("Unsynced (Modified)", posts.unsynced, "modified", false);
-                this.renderSection("Drafts", posts.drafts, "new", false);
-                this.renderSection("Published", posts.published, "published", true);
+                this.renderSection(t('DASHBOARD_SECTION_UNSYNCED'), posts.unsynced, "modified", false);
+                this.renderSection(t('DASHBOARD_SECTION_DRAFTS'), posts.drafts, "new", false);
+                this.renderSection(t('DASHBOARD_SECTION_PUBLISHED'), posts.published, "published", true);
             }
         } finally {
             this.isRendering = false;
@@ -83,7 +84,7 @@ export class HexoManagementView extends ItemView {
         const empty = container.createDiv({ cls: "hexo-empty-state" });
         const icon = empty.createDiv({ cls: "hexo-empty-state-icon" });
         setIcon(icon, "check-circle");
-        empty.createEl("div", { text: "No Hexo posts found in vault.", cls: "hexo-empty-state-text" });
+        empty.createEl("div", { text: t('DASHBOARD_EMPTY_STATE'), cls: "hexo-empty-state-text" });
     }
 
     async getPostsByStatus() {
@@ -135,13 +136,13 @@ export class HexoManagementView extends ItemView {
             };
 
             const badge = cardHeader.createSpan({
-                text: type === 'modified' ? 'Modified' : (type === 'new' ? 'Draft' : 'Published'),
+                text: type === 'modified' ? t('DASHBOARD_BADGE_MODIFIED') : (type === 'new' ? t('DASHBOARD_BADGE_DRAFT') : t('DASHBOARD_BADGE_PUBLISHED')),
                 cls: `hexo-status-badge ${type}`
             });
 
             if (type !== 'published') {
                 const cardFooter = card.createDiv({ cls: "hexo-post-card-footer" });
-                const publishBtn = cardFooter.createEl("button", { text: "Publish", cls: "mod-small" });
+                const publishBtn = cardFooter.createEl("button", { text: t('DASHBOARD_PUBLISH_BUTTON'), cls: "mod-small" });
                 setIcon(publishBtn, "upload");
                 publishBtn.onclick = async (e) => {
                     e.stopPropagation();
@@ -157,11 +158,11 @@ export class HexoManagementView extends ItemView {
 
     async bulkPublish(files: TFile[]) {
         if (files.length === 0) {
-            new Notice("No posts to publish.");
+            new Notice(t('NOTICE_NO_POSTS_TO_PUBLISH'));
             return;
         }
 
-        new Notice(`Bulk publishing ${files.length} posts...`);
+        new Notice(t('NOTICE_BULK_PUBLISHING', { count: String(files.length) }));
         for (const file of files) {
             try {
                 await this.plugin.postService.publishPost(file, async () => {
@@ -173,7 +174,7 @@ export class HexoManagementView extends ItemView {
         }
         this.plugin.updateStatusBar();
         this.render();
-        new Notice("Bulk publish completed.");
+        new Notice(t('NOTICE_BULK_PUBLISH_COMPLETED'));
     }
 
     async onClose() {

@@ -9,6 +9,7 @@ import { LinkService } from './services/LinkService';
 import { FilenameService } from './services/FilenameService';
 import { FileWatcherService } from './services/FileWatcherService';
 import { HexoManagementView, HEXO_VIEW_TYPE } from './views/HexoManagementView';
+import { t } from './i18n/helpers';
 
 export default class HexoIntegration extends Plugin {
     settings: HexoIntegrationSettings;
@@ -40,7 +41,7 @@ export default class HexoIntegration extends Plugin {
 
         this.statusBarItemEl = this.addStatusBarItem();
         this.statusBarItemEl.addClass('mod-clickable');
-        this.statusBarItemEl.setAttribute('aria-label', 'Publish to Hexo');
+        this.statusBarItemEl.setAttribute('aria-label', t('STATUS_BAR_PUBLISH'));
 
         this.statusBarItemEl.onClickEvent(async () => {
             const activeFile = this.app.workspace.getActiveFile();
@@ -55,19 +56,19 @@ export default class HexoIntegration extends Plugin {
         // Start File Watcher
         await this.fileWatcherService.start();
 
-        this.addRibbonIcon('hexo-logo', 'Hexo Integration', (evt: MouseEvent) => {
+        this.addRibbonIcon('hexo-logo', t('RIBBON_TOOLTIP'), (evt: MouseEvent) => {
             new HexoCommandModal(this.app, this).open();
         });
 
         this.addCommand({
             id: 'create-hexo-post',
-            name: 'Create new Hexo Post',
+            name: t('COMMAND_CREATE_POST'),
             callback: () => this.postService.createHexoPost()
         });
 
         this.addCommand({
             id: 'convert-to-hexo',
-            name: 'Convert current file to Hexo format',
+            name: t('COMMAND_CONVERT'),
             callback: () => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) this.postService.convertToHexo(activeFile);
@@ -76,7 +77,7 @@ export default class HexoIntegration extends Plugin {
 
         this.addCommand({
             id: 'publish-hexo-post',
-            name: 'Publish current post',
+            name: t('COMMAND_PUBLISH_POST'),
             callback: async () => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) {
@@ -90,25 +91,25 @@ export default class HexoIntegration extends Plugin {
 
         this.addCommand({
             id: 'hexo-generate',
-            name: 'Generate Hexo Pages',
+            name: t('COMMAND_GENERATE'),
             callback: () => this.hexoService.hexoGenerate()
         });
 
         this.addCommand({
             id: 'hexo-server',
-            name: 'Start Hexo Server',
+            name: t('COMMAND_SERVER'),
             callback: () => this.hexoService.hexoServer()
         });
 
         this.addCommand({
             id: 'hexo-deploy',
-            name: 'Deploy Hexo Pages',
+            name: t('COMMAND_DEPLOY'),
             callback: () => this.hexoService.hexoDeploy()
         });
 
         this.addCommand({
             id: 'generate-permalink',
-            name: 'Generate Permalink for current post',
+            name: t('COMMAND_GEN_PERMALINK'),
             callback: async () => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) {
@@ -117,7 +118,7 @@ export default class HexoIntegration extends Plugin {
                         await this.app.fileManager.processFrontMatter(activeFile, (fm) => {
                             fm.permalink = generatedPermalink;
                         });
-                        new Notice(`Generated permalink: ${generatedPermalink}`);
+                        new Notice(t('NOTICE_GEN_PERMALINK', { permalink: generatedPermalink }));
                     }
                 }
             }
@@ -129,13 +130,13 @@ export default class HexoIntegration extends Plugin {
 
         this.addCommand({
             id: 'open-hexo-management-view',
-            name: 'Open Hexo Management View',
+            name: t('COMMAND_OPEN_VIEW'),
             callback: () => this.activateView(),
         });
 
         this.addCommand({
             id: 'clean-active-assets',
-            name: 'Cleanup unused assets for current post',
+            name: t('COMMAND_CLEAN_ACTIVE'),
             callback: () => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) this.postService.cleanAssets(activeFile);
@@ -144,7 +145,7 @@ export default class HexoIntegration extends Plugin {
 
         this.addCommand({
             id: 'clean-all-assets',
-            name: 'Cleanup unused assets for all posts',
+            name: t('COMMAND_CLEAN_ALL'),
             callback: () => this.postService.cleanAllAssets()
         });
 
@@ -185,16 +186,16 @@ export default class HexoIntegration extends Plugin {
 
         let icon = 'circle';
         let color = '--text-muted';
-        let statusText = 'Draft';
+        let statusText = t('STATUS_DRAFT');
 
         if (status === 'published') {
             icon = 'check-circle';
             color = '--text-success';
-            statusText = 'Published';
+            statusText = t('STATUS_PUBLISHED');
         } else if (status === 'unsynced') {
             icon = 'alert-circle';
             color = '--text-warning';
-            statusText = 'Unsynced';
+            statusText = t('STATUS_UNSYNCED');
         }
 
         const container = this.statusBarItemEl.createSpan({ cls: 'hexo-status-bar-container' });
@@ -255,13 +256,13 @@ class HexoCommandModal extends SuggestModal<HexoCommand> {
     constructor(app: App, plugin: HexoIntegration) {
         super(app);
         this.plugin = plugin;
-        this.setPlaceholder("Search for a Hexo command...");
+        this.setPlaceholder(t('SUGGEST_PLACEHOLDER'));
     }
 
     getSuggestions(query: string): HexoCommand[] {
         const commands = [
             {
-                label: "Publish current post",
+                label: t('COMMAND_PUBLISH_POST'),
                 callback: async () => {
                     const activeFile = this.app.workspace.getActiveFile();
                     if (activeFile) {
@@ -273,23 +274,23 @@ class HexoCommandModal extends SuggestModal<HexoCommand> {
                 }
             },
             {
-                label: "Open Hexo Management View",
+                label: t('COMMAND_OPEN_VIEW'),
                 callback: () => this.plugin.activateView()
             },
             {
-                label: "Generate Hexo Pages",
+                label: t('COMMAND_GENERATE'),
                 callback: () => this.plugin.hexoService.hexoGenerate()
             },
             {
-                label: "Start Hexo Server",
+                label: t('COMMAND_SERVER'),
                 callback: () => this.plugin.hexoService.hexoServer()
             },
             {
-                label: "Deploy Hexo Pages",
+                label: t('COMMAND_DEPLOY'),
                 callback: () => this.plugin.hexoService.hexoDeploy()
             },
             {
-                label: "Generate Permalink",
+                label: t('COMMAND_GEN_PERMALINK'),
                 callback: async () => {
                     const activeFile = this.app.workspace.getActiveFile();
                     if (activeFile) {
@@ -298,31 +299,31 @@ class HexoCommandModal extends SuggestModal<HexoCommand> {
                             await this.app.fileManager.processFrontMatter(activeFile, (fm) => {
                                 fm.permalink = generatedPermalink;
                             });
-                            new Notice(`Generated permalink: ${generatedPermalink}`);
+                            new Notice(t('NOTICE_GEN_PERMALINK', { permalink: generatedPermalink }));
                         }
                     }
                 }
             },
             {
-                label: "Create new Hexo Post",
+                label: t('COMMAND_CREATE_POST'),
                 callback: () => this.plugin.postService.createHexoPost()
             },
             {
-                label: "Convert current file to Hexo format",
+                label: t('COMMAND_CONVERT'),
                 callback: () => {
                     const activeFile = this.app.workspace.getActiveFile();
                     if (activeFile) this.plugin.postService.convertToHexo(activeFile);
                 }
             },
             {
-                label: "Cleanup unused assets for current post",
+                label: t('COMMAND_CLEAN_ACTIVE'),
                 callback: () => {
                     const activeFile = this.app.workspace.getActiveFile();
                     if (activeFile) this.plugin.postService.cleanAssets(activeFile);
                 }
             },
             {
-                label: "Cleanup unused assets for all posts",
+                label: t('COMMAND_CLEAN_ALL'),
                 callback: () => this.plugin.postService.cleanAllAssets()
             }
         ];

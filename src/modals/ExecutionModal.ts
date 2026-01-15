@@ -1,5 +1,6 @@
 import { App, Modal, Setting } from "obsidian";
 import Convert from 'ansi-to-html';
+import { t } from '../i18n/helpers';
 
 export class ExecutionModal extends Modal {
     private logContainer: HTMLElement;
@@ -24,7 +25,7 @@ export class ExecutionModal extends Modal {
         const { contentEl } = this;
         this.titleEl.setText(this.titleText);
 
-        contentEl.createEl("div", { cls: "hexo-execution-modal-desc", text: "Streaming output from Hexo command:" });
+        contentEl.createEl("div", { cls: "hexo-execution-modal-desc", text: t('MODAL_EXECUTION_DESC') });
 
         this.logContainer = contentEl.createEl("div", {
             cls: "hexo-execution-log-container",
@@ -47,7 +48,7 @@ export class ExecutionModal extends Modal {
         buttonContainer.style.gap = "10px";
 
         this.stopButton = buttonContainer.createEl("button", {
-            text: "Stop",
+            text: t('MODAL_EXECUTION_STOP'),
             cls: "mod-warning",
         });
         this.stopButton.onclick = () => {
@@ -55,7 +56,7 @@ export class ExecutionModal extends Modal {
         };
 
         this.closeButton = buttonContainer.createEl("button", {
-            text: "Close",
+            text: t('MODAL_EXECUTION_CLOSE'),
             cls: "mod-cta",
         });
         this.closeButton.disabled = true;
@@ -77,7 +78,7 @@ export class ExecutionModal extends Modal {
         this.isRunning = false;
         this.closeButton.disabled = false;
         this.stopButton.disabled = true;
-        this.appendLog("\n--- Command finished ---");
+        this.appendLog("\n--- " + t('MODAL_EXECUTION_FINISHED') + " ---");
     }
 
     onClose() {

@@ -1,6 +1,7 @@
 import { App, Modal, Setting, Notice } from 'obsidian';
 import * as fs from 'fs';
 import * as pathNode from 'path';
+import { t } from '../i18n/helpers';
 
 export interface UnusedAsset {
     filePath: string;
@@ -21,14 +22,14 @@ export class AssetCleanupModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
 
-        contentEl.createEl('h2', { text: 'Unused Assets Cleanup' });
+        contentEl.createEl('h2', { text: t('MODAL_CLEANUP_TITLE') });
 
         if (this.unusedAssets.length === 0) {
-            contentEl.createEl('p', { text: 'No unused images found.' });
+            contentEl.createEl('p', { text: t('MODAL_CLEANUP_EMPTY') });
             return;
         }
 
-        contentEl.createEl('p', { text: `Found ${this.unusedAssets.length} unused images. Are you sure you want to delete them?` });
+        contentEl.createEl('p', { text: t('MODAL_CLEANUP_CONFIRM', { count: String(this.unusedAssets.length) }) });
 
         const listContainer = contentEl.createDiv({ cls: 'hexo-cleanup-list' });
         listContainer.style.maxHeight = '300px';
@@ -49,14 +50,14 @@ export class AssetCleanupModal extends Modal {
 
         new Setting(contentEl)
             .addButton(btn => btn
-                .setButtonText('Cancel')
+                .setButtonText(t('MODAL_BUTTON_CANCEL'))
                 .onClick(() => this.close()))
             .addButton(btn => btn
-                .setButtonText('Delete All')
+                .setButtonText(t('MODAL_BUTTON_DELETE_ALL'))
                 .setWarning()
                 .onClick(async () => {
                     btn.setDisabled(true);
-                    btn.setButtonText('Deleting...');
+                    btn.setButtonText(t('MODAL_BUTTON_DELETING'));
                     await this.onConfirm();
                     this.close();
                 }));

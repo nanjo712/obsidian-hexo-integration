@@ -2,13 +2,14 @@ import { spawn } from 'child_process';
 import { App, Notice } from 'obsidian';
 import { HexoIntegrationSettings } from '../settings';
 import { ExecutionModal } from '../modals/ExecutionModal';
+import { t } from '../i18n/helpers';
 
 export class HexoService {
     constructor(private app: App, private settings: HexoIntegrationSettings) { }
 
     private runHexoCommand(command: string, args: string[], successMessage: string) {
         if (!this.settings.hexoRoot) {
-            new Notice('Error: Hexo root directory not configured.');
+            new Notice(t('NOTICE_HEXO_ROOT_NOT_SET'));
             return;
         }
 
@@ -17,7 +18,7 @@ export class HexoService {
             modal = new ExecutionModal(this.app, `Hexo: ${command} ${args.join(' ')}`);
             modal.open();
         } else {
-            new Notice(`Running Hexo: ${command} ${args.join(' ')}...`);
+            new Notice(t('NOTICE_RUNNING_HEXO', { command: `${command} ${args.join(' ')}` }));
         }
 
         const child = spawn(command, args, { cwd: this.settings.hexoRoot, shell: true });
@@ -29,7 +30,7 @@ export class HexoService {
                 } else {
                     child.kill('SIGINT');
                 }
-                if (modal) modal.appendLog("\n--- Command interrupted by user ---", 'stderr');
+                if (modal) modal.appendLog("\n--- " + t('NOTICE_HEXO_INTERRUPTED') + " ---", 'stderr');
             };
         }
 
@@ -49,13 +50,13 @@ export class HexoService {
             if (code === 0) {
                 new Notice(successMessage);
             } else {
-                new Notice(`Error: Hexo command failed with code ${code}.`);
+                new Notice(t('NOTICE_HEXO_FAILED', { code: String(code) }));
             }
             if (modal) modal.setFinished();
         });
 
         child.on('error', (err) => {
-            new Notice(`Error starting Hexo command: ${err.message}`);
+            new Notice(t('NOTICE_HEXO_START_ERROR', { message: err.message }));
             if (modal) {
                 modal.appendLog(`\nError: ${err.message}`, 'stderr');
                 modal.setFinished();
@@ -64,15 +65,15 @@ export class HexoService {
     }
 
     hexoGenerate() {
-        this.runHexoCommand('hexo', ['generate'], 'Hexo: Site generated successfully.');
+        this.runHexoCommand('hexo', ['generate'], t('NOTICE_GENERATE_SUCCESS'));
     }
 
     hexoServer() {
         const port = this.settings.serverPort || 4000;
-        this.runHexoCommand('hexo', ['server', '-p', String(port)], `Hexo: Server started at http://localhost:${port}`);
+        this.runHexoCommand('hexo', ['server', '-p', String(port)], t('NOTICE_SERVER_STARTED', { port: String(port) }));
     }
 
     hexoDeploy() {
-        this.runHexoCommand('hexo', ['deploy'], 'Hexo: Site deployed successfully.');
+        this.runHexoCommand('hexo', ['deploy'], t('NOTICE_DEPLOY_SUCCESS'));
     }
 }

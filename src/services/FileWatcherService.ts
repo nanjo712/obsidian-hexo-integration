@@ -54,8 +54,14 @@ export class FileWatcherService {
         const keysToRemove: string[] = [];
 
         for (const obsidianPath in this.settings.postHashes) {
-            const obsidianFileName = pathNode.basename(obsidianPath);
-            const hexoFilePath = pathNode.join(postsPath, obsidianFileName);
+            const hexoFileName = this.settings.pathMapping[obsidianPath];
+            if (!hexoFileName) {
+                // Mapping missing, likely legacy
+                keysToRemove.push(obsidianPath);
+                continue;
+            }
+
+            const hexoFilePath = pathNode.join(postsPath, hexoFileName);
 
             try {
                 await fs.access(hexoFilePath);
@@ -74,9 +80,8 @@ export class FileWatcherService {
         const fileName = pathNode.basename(hexoFilePath);
         const keysToRemove: string[] = [];
 
-        for (const obsidianPath in this.settings.postHashes) {
-            const obsidianFileName = pathNode.basename(obsidianPath);
-            if (obsidianFileName === fileName) {
+        for (const obsidianPath in this.settings.pathMapping) {
+            if (this.settings.pathMapping[obsidianPath] === fileName) {
                 keysToRemove.push(obsidianPath);
             }
         }
@@ -120,6 +125,7 @@ export class FileWatcherService {
             }
 
             delete this.settings.postHashes[obsidianPath];
+            delete this.settings.pathMapping[obsidianPath];
         }
 
         if (obsidianPaths.length > 0) {

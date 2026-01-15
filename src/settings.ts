@@ -12,6 +12,7 @@ export interface HexoIntegrationSettings {
     imageSyntax: 'hexo' | 'markdown';
     coverFieldName: string;
     showOutputModal: boolean;
+    pathMapping: Record<string, string>;
 }
 
 export const DEFAULT_SETTINGS: HexoIntegrationSettings = {
@@ -24,7 +25,8 @@ export const DEFAULT_SETTINGS: HexoIntegrationSettings = {
     maxSlugWords: 5,
     imageSyntax: 'hexo',
     coverFieldName: 'cover',
-    showOutputModal: true
+    showOutputModal: true,
+    pathMapping: {}
 }
 
 export class HexoIntegrationSettingTab extends PluginSettingTab {

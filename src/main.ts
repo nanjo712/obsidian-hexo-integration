@@ -6,6 +6,7 @@ import { SyncService } from './services/SyncService';
 import { ImageService } from './services/ImageService';
 import { PostService } from './services/PostService';
 import { LinkService } from './services/LinkService';
+import { FileWatcherService } from './services/FileWatcherService';
 import { HexoManagementView, HEXO_VIEW_TYPE } from './views/HexoManagementView';
 
 export default class HexoIntegration extends Plugin {
@@ -17,6 +18,7 @@ export default class HexoIntegration extends Plugin {
     syncService: SyncService;
     imageService: ImageService;
     postService: PostService;
+    fileWatcherService: FileWatcherService;
 
     async onload() {
         await this.loadSettings();
@@ -28,6 +30,7 @@ export default class HexoIntegration extends Plugin {
         this.imageService = new ImageService(this.app, this.settings);
         const linkService = new LinkService(this.app);
         this.postService = new PostService(this.app, this.settings, this.permalinkService, this.syncService, this.imageService, linkService);
+        this.fileWatcherService = new FileWatcherService(this.app, this.settings, () => this.updateStatusBar());
 
         // Register custom Hexo icon
         addIcon('hexo-logo', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.02 0L1.596 6.02l-.02 12L11.978 24l10.426-6.02.02-12zm4.828 17.14l-.96.558-.969-.574V12.99H9.081v4.15l-.96.558-.969-.574V6.854l.964-.552.965.563v4.145h5.838V6.86l.965-.552.964.563z"/></svg>');
@@ -45,6 +48,9 @@ export default class HexoIntegration extends Plugin {
                 });
             }
         });
+
+        // Start File Watcher
+        this.fileWatcherService.start();
 
         this.addRibbonIcon('hexo-logo', 'Hexo Integration', (evt: MouseEvent) => {
             new HexoCommandModal(this.app, this).open();
@@ -136,7 +142,9 @@ export default class HexoIntegration extends Plugin {
         this.updateStatusBar();
     }
 
-    onunload() { }
+    onunload() {
+        this.fileWatcherService.stop();
+    }
 
     async updateStatusBar() {
         const file = this.app.workspace.getActiveFile();

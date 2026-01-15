@@ -49,6 +49,7 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.hexoRoot = value;
                     await this.plugin.saveSettings();
+                    this.plugin.fileWatcherService.start();
                 }));
 
         new Setting(containerEl)

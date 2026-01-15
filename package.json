@@ -25,6 +25,7 @@
     },
     "dependencies": {
         "ansi-to-html": "^0.7.2",
+        "chokidar": "^5.0.0",
         "obsidian": "latest",
         "pinyin-pro": "^3.27.0"
     }

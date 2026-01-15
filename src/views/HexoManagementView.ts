@@ -34,6 +34,7 @@ export class HexoManagementView extends ItemView {
         }));
         this.registerEvent(this.app.vault.on("rename", () => this.render()));
         this.registerEvent(this.app.vault.on("delete", () => this.render()));
+        this.registerEvent(this.app.workspace.on("hexo-integration:sync-change" as any, () => this.render()));
 
         await this.render();
     }

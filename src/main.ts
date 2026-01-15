@@ -1,4 +1,5 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, TFile, TAbstractFile, SuggestModal, addIcon, setIcon } from 'obsidian';
+import { exec } from 'child_process';
 import { DEFAULT_SETTINGS, HexoIntegrationSettings, HexoIntegrationSettingTab } from "./settings";
 
 export default class HexoIntegration extends Plugin {
@@ -79,6 +80,24 @@ export default class HexoIntegration extends Plugin {
                     await this.publishPost(activeFile);
                 }
             }
+        });
+
+        this.addCommand({
+            id: 'hexo-generate',
+            name: 'Hexo: Generate',
+            callback: () => this.hexoGenerate()
+        });
+
+        this.addCommand({
+            id: 'hexo-server',
+            name: 'Hexo: Server',
+            callback: () => this.hexoServer()
+        });
+
+        this.addCommand({
+            id: 'hexo-deploy',
+            name: 'Hexo: Deploy',
+            callback: () => this.hexoDeploy()
         });
 
         // This adds a settings tab so the user can configure various aspects of the plugin
@@ -216,6 +235,37 @@ publish: false
         }
     }
 
+    runHexoCommand(command: string, successMessage: string) {
+        if (!this.settings.hexoRoot) {
+            new Notice('Error: Hexo root directory not configured.');
+            return;
+        }
+
+        new Notice(`Running: hexo ${command}...`);
+        exec(`hexo ${command}`, { cwd: this.settings.hexoRoot }, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`exec error: ${error}`);
+                new Notice(`Error: ${error.message}`);
+                return;
+            }
+            console.log(`stdout: ${stdout}`);
+            console.error(`stderr: ${stderr}`);
+            new Notice(successMessage);
+        });
+    }
+
+    hexoGenerate() {
+        this.runHexoCommand('generate', 'Hexo: Generation complete.');
+    }
+
+    hexoServer() {
+        this.runHexoCommand('server', 'Hexo: Server started (check console for details).');
+    }
+
+    hexoDeploy() {
+        this.runHexoCommand('deploy', 'Hexo: Deployment complete.');
+    }
+
     async computeHash(content: string): Promise<string> {
         const buffer = new TextEncoder().encode(content);
         const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
@@ -307,6 +357,18 @@ class HexoCommandModal extends SuggestModal<HexoCommand> {
             {
                 label: "Create new Hexo Post",
                 callback: () => this.plugin.createHexoPost()
+            },
+            {
+                label: "Hexo: Generate",
+                callback: () => this.plugin.hexoGenerate()
+            },
+            {
+                label: "Hexo: Server",
+                callback: () => this.plugin.hexoServer()
+            },
+            {
+                label: "Hexo: Deploy",
+                callback: () => this.plugin.hexoDeploy()
             }
         ];
 

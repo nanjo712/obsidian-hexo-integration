@@ -10,6 +10,7 @@ export interface HexoIntegrationSettings {
     removeStopWords: boolean;
     maxSlugWords: number;
     imageSyntax: 'hexo' | 'markdown';
+    coverFieldName: string;
 }
 
 export const DEFAULT_SETTINGS: HexoIntegrationSettings = {
@@ -20,7 +21,8 @@ export const DEFAULT_SETTINGS: HexoIntegrationSettings = {
     baiduApiKey: '',
     removeStopWords: true,
     maxSlugWords: 5,
-    imageSyntax: 'hexo'
+    imageSyntax: 'hexo',
+    coverFieldName: 'cover'
 }
 
 export class HexoIntegrationSettingTab extends PluginSettingTab {
@@ -72,6 +74,17 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.imageSyntax)
                 .onChange(async (value: 'hexo' | 'markdown') => {
                     this.plugin.settings.imageSyntax = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Cover Field Name')
+            .setDesc('Title of the frontmatter field for the cover image.')
+            .addText(text => text
+                .setPlaceholder('cover')
+                .setValue(this.plugin.settings.coverFieldName)
+                .onChange(async (value) => {
+                    this.plugin.settings.coverFieldName = value;
                     await this.plugin.saveSettings();
                 }));
 

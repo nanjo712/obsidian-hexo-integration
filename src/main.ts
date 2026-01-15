@@ -21,7 +21,7 @@ export default class HexoIntegration extends Plugin {
 
         // Initialize Services
         this.slugService = new SlugService(this.settings);
-        this.hexoService = new HexoService(this.settings);
+        this.hexoService = new HexoService(this.app, this.settings);
         this.syncService = new SyncService(this.app, this.settings);
         this.imageService = new ImageService(this.app, this.settings);
         this.postService = new PostService(this.app, this.settings, this.slugService, this.syncService, this.imageService);

@@ -11,6 +11,7 @@ export interface HexoIntegrationSettings {
     maxSlugWords: number;
     imageSyntax: 'hexo' | 'markdown';
     coverFieldName: string;
+    showOutputModal: boolean;
 }
 
 export const DEFAULT_SETTINGS: HexoIntegrationSettings = {
@@ -22,7 +23,8 @@ export const DEFAULT_SETTINGS: HexoIntegrationSettings = {
     removeStopWords: true,
     maxSlugWords: 5,
     imageSyntax: 'hexo',
-    coverFieldName: 'cover'
+    coverFieldName: 'cover',
+    showOutputModal: true
 }
 
 export class HexoIntegrationSettingTab extends PluginSettingTab {
@@ -85,6 +87,16 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.coverFieldName)
                 .onChange(async (value) => {
                     this.plugin.settings.coverFieldName = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Show Output Panel')
+            .setDesc('Show a real-time output panel when running Hexo commands (generate, deploy, etc.)')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.showOutputModal)
+                .onChange(async (value) => {
+                    this.plugin.settings.showOutputModal = value;
                     await this.plugin.saveSettings();
                 }));
 

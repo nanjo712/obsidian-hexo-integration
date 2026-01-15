@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, TFile } from 'obsidian';
 import { DEFAULT_SETTINGS, HexoIntegrationSettings, HexoIntegrationSettingTab } from "./settings";
 
 // Remember to rename these classes and interfaces!
@@ -36,6 +36,28 @@ export default class HexoIntegration extends Plugin {
             }
         });
 
+        this.addCommand({
+            id: 'convert-to-hexo',
+            name: 'Convert to Hexo format',
+            callback: async () => {
+                const activeFile = this.app.workspace.getActiveFile();
+                if (activeFile) {
+                    await this.convertToHexo(activeFile);
+                }
+            }
+        });
+
+        this.addCommand({
+            id: 'publish-post',
+            name: 'Publish current post',
+            callback: async () => {
+                const activeFile = this.app.workspace.getActiveFile();
+                if (activeFile) {
+                    await this.publishPost(activeFile);
+                }
+            }
+        });
+
 
         // This adds a settings tab so the user can configure various aspects of the plugin
         this.addSettingTab(new HexoIntegrationSettingTab(this.app, this));
@@ -66,6 +88,22 @@ export default class HexoIntegration extends Plugin {
         }
 
         // Generate content
+        const dateStr = this.getFormattedDate();
+
+        const content = `---
+title: 
+date: ${dateStr}
+tags: 
+publish: false
+---
+`;
+
+        // Create and open
+        const file = await this.app.vault.create(fileName, content);
+        this.app.workspace.getLeaf(false).openFile(file);
+    }
+
+    getFormattedDate() {
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -73,18 +111,65 @@ export default class HexoIntegration extends Plugin {
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
         const seconds = String(now.getSeconds()).padStart(2, '0');
-        const dateStr = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
 
-        const content = `---
-title: 
-date: ${dateStr}
-tags: 
----
-`;
+    async convertToHexo(file: TFile) {
+        await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+            if (!frontmatter.title) frontmatter.title = file.basename;
+            if (!frontmatter.date) frontmatter.date = this.getFormattedDate();
+            if (!frontmatter.tags) frontmatter.tags = [];
+            if (frontmatter.publish === undefined) frontmatter.publish = false;
+        });
+        new Notice(`${file.name} converted to Hexo format.`);
+    }
 
-        // Create and open
-        const file = await this.app.vault.create(fileName, content);
-        this.app.workspace.getLeaf(false).openFile(file);
+    async publishPost(file: TFile) {
+        if (!this.settings.hexoRoot) {
+            new Notice('Error: Hexo root directory not configured in settings.');
+            return;
+        }
+
+        // Check format
+        const cache = this.app.metadataCache.getFileCache(file);
+        const frontmatter = cache?.frontmatter;
+        const isHexoFormat = frontmatter &&
+            'title' in frontmatter &&
+            'date' in frontmatter &&
+            'tags' in frontmatter &&
+            'publish' in frontmatter;
+
+        if (!isHexoFormat) {
+            await this.convertToHexo(file);
+        }
+
+        // Set publish to true
+        await this.app.fileManager.processFrontMatter(file, (fm) => {
+            fm.publish = true;
+        });
+
+        // Copy to Hexo
+        try {
+            const content = await this.app.vault.read(file);
+            const path = Buffer.from(this.settings.hexoRoot).toString(); // Ensure path exists
+            const destPath = `${this.settings.hexoRoot}/source/_posts/${file.name}`;
+
+            // Note: Use node fs for writing outside vault
+            const fs = require('fs');
+            const pathNode = require('path');
+            const targetDir = pathNode.join(this.settings.hexoRoot, 'source', '_posts');
+
+            if (!fs.existsSync(targetDir)) {
+                new Notice(`Error: Target directory ${targetDir} does not exist.`);
+                return;
+            }
+
+            fs.writeFileSync(pathNode.join(targetDir, file.name), content);
+            new Notice(`Published ${file.name} to Hexo blog.`);
+        } catch (error: any) {
+            console.error(error);
+            new Notice(`Error publishing post: ${error.message}`);
+        }
     }
 
     async loadSettings() {

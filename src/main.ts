@@ -133,6 +133,21 @@ export default class HexoIntegration extends Plugin {
             callback: () => this.activateView(),
         });
 
+        this.addCommand({
+            id: 'clean-active-assets',
+            name: 'Cleanup unused assets for current post',
+            callback: () => {
+                const activeFile = this.app.workspace.getActiveFile();
+                if (activeFile) this.postService.cleanAssets(activeFile);
+            }
+        });
+
+        this.addCommand({
+            id: 'clean-all-assets',
+            name: 'Cleanup unused assets for all posts',
+            callback: () => this.postService.cleanAllAssets()
+        });
+
         this.registerEvent(this.app.workspace.on('file-open', () => this.updateStatusBar()));
         this.registerEvent(this.app.vault.on('modify', (file) => {
             if (file instanceof TFile && file === this.app.workspace.getActiveFile()) {
@@ -298,6 +313,17 @@ class HexoCommandModal extends SuggestModal<HexoCommand> {
                     const activeFile = this.app.workspace.getActiveFile();
                     if (activeFile) this.plugin.postService.convertToHexo(activeFile);
                 }
+            },
+            {
+                label: "Cleanup unused assets for current post",
+                callback: () => {
+                    const activeFile = this.app.workspace.getActiveFile();
+                    if (activeFile) this.plugin.postService.cleanAssets(activeFile);
+                }
+            },
+            {
+                label: "Cleanup unused assets for all posts",
+                callback: () => this.plugin.postService.cleanAllAssets()
             }
         ];
 

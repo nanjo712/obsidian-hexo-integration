@@ -13,6 +13,8 @@ export interface HexoIntegrationSettings {
     coverFieldName: string;
     showOutputModal: boolean;
     pathMapping: Record<string, string>;
+    autoExcerpt: boolean;
+    serverPort: number;
 }
 
 export const DEFAULT_SETTINGS: HexoIntegrationSettings = {
@@ -26,7 +28,9 @@ export const DEFAULT_SETTINGS: HexoIntegrationSettings = {
     imageSyntax: 'hexo',
     coverFieldName: 'cover',
     showOutputModal: true,
-    pathMapping: {}
+    pathMapping: {},
+    autoExcerpt: false,
+    serverPort: 4000
 }
 
 export class HexoIntegrationSettingTab extends PluginSettingTab {
@@ -55,8 +59,8 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Slug Style')
-            .setDesc('How to generate the slug if it is missing when publishing.')
+            .setName('Permalink Style')
+            .setDesc('How to generate the permalink if it is missing when publishing.')
             .addDropdown(dropdown => dropdown
                 .addOption('translate', 'Baidu Translate')
                 .addOption('title', 'Note Title')
@@ -103,6 +107,30 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }));
 
+        new Setting(containerEl)
+            .setName('Auto Excerpt')
+            .setDesc('Automatically insert <!--more--> after the first paragraph when publishing.')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.autoExcerpt)
+                .onChange(async (value) => {
+                    this.plugin.settings.autoExcerpt = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Hexo Server Port')
+            .setDesc('The port used by the Hexo preview server (default: 4000).')
+            .addText(text => text
+                .setPlaceholder('4000')
+                .setValue(String(this.plugin.settings.serverPort))
+                .onChange(async (value) => {
+                    const num = parseInt(value);
+                    if (!isNaN(num)) {
+                        this.plugin.settings.serverPort = num;
+                        await this.plugin.saveSettings();
+                    }
+                }));
+
         if (this.plugin.settings.slugStyle === 'translate') {
             containerEl.createEl('h3', { text: 'Baidu Translate Settings' });
 
@@ -126,7 +154,7 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
         }
 
         if (this.plugin.settings.slugStyle === 'translate' || this.plugin.settings.slugStyle === 'title') {
-            containerEl.createEl('h3', { text: 'Slug Post-Processing' });
+            containerEl.createEl('h3', { text: 'Permalink Post-Processing' });
 
             new Setting(containerEl)
                 .setName('Remove Stop Words')
@@ -139,8 +167,8 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                     }));
 
             new Setting(containerEl)
-                .setName('Max Slug Words')
-                .setDesc('Maximum number of words in the generated slug.')
+                .setName('Max Permalink Words')
+                .setDesc('Maximum number of words in the generated permalink.')
                 .addText(text => text
                     .setValue(String(this.plugin.settings.maxSlugWords))
                     .onChange(async (value) => {

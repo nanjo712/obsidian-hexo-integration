@@ -68,7 +68,8 @@ export class HexoService {
     }
 
     hexoServer() {
-        this.runHexoCommand('hexo', ['server'], 'Hexo: Server started at http://localhost:4000');
+        const port = this.settings.serverPort || 4000;
+        this.runHexoCommand('hexo', ['server', '-p', String(port)], `Hexo: Server started at http://localhost:${port}`);
     }
 
     hexoDeploy() {

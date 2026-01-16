@@ -1,7 +1,7 @@
 {
 	"id": "hexo-integration",
 	"name": "Hexo Integration",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"minAppVersion": "1.11.4",
 	"description": "Seamlessly manage, preview, and publish posts to your Hexo blog directly. Includes auto-formatting, image compression, and command execution.",
 	"author": "nanjo712",

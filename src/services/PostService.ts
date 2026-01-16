@@ -207,7 +207,7 @@ export class PostService {
         }
     }
 
-    async cleanAssets(file: TFile) {
+    cleanAssets(file: TFile) {
         if (!this.syncService.isHexoFile(file)) {
             new Notice(t('NOTICE_NOT_HEXO_FORMAT'));
             return;
@@ -233,7 +233,7 @@ export class PostService {
         }).open();
     }
 
-    async cleanAllAssets() {
+    cleanAllAssets() {
         const files = this.app.vault.getMarkdownFiles();
         let allUnused: UnusedAsset[] = [];
 

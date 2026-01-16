@@ -137,14 +137,14 @@ export default class HexoIntegration extends Plugin {
             name: t('COMMAND_CLEAN_ACTIVE'),
             callback: () => {
                 const activeFile = this.app.workspace.getActiveFile();
-                if (activeFile) { void this.postService.cleanAssets(activeFile); }
+                if (activeFile) { this.postService.cleanAssets(activeFile); }
             }
         });
 
         this.addCommand({
             id: 'clean-all-assets',
             name: t('COMMAND_CLEAN_ALL'),
-            callback: () => { void this.postService.cleanAllAssets(); }
+            callback: () => { this.postService.cleanAllAssets(); }
         });
 
         this.registerEvent(this.app.workspace.on('file-open', () => { void this.updateStatusBar(); }));
@@ -333,12 +333,12 @@ class HexoCommandModal extends SuggestModal<HexoCommand> {
                 label: t('COMMAND_CLEAN_ACTIVE'),
                 callback: () => {
                     const activeFile = this.app.workspace.getActiveFile();
-                    if (activeFile) { void this.plugin.postService.cleanAssets(activeFile); }
+                    if (activeFile) { this.plugin.postService.cleanAssets(activeFile); }
                 }
             },
             {
                 label: t('COMMAND_CLEAN_ALL'),
-                callback: () => { void this.plugin.postService.cleanAllAssets(); }
+                callback: () => { this.plugin.postService.cleanAllAssets(); }
             }
         ];
 

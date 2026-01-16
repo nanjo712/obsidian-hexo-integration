@@ -17,19 +17,19 @@ export class SyncService {
         return !!(frontmatter && 'published' in frontmatter);
     }
 
-    async getSyncStatus(file: TFile): Promise<'published' | 'unsynced' | 'unpublished'> {
+    async getSyncStatus(file: TFile): Promise<'published' | 'unsynced' | 'draft'> {
         const cache = this.app.metadataCache.getFileCache(file);
         const frontmatter = cache?.frontmatter;
 
         if (!frontmatter || !frontmatter.published) {
-            return 'unpublished';
+            return 'draft';
         }
 
         const currentHash = await this.computeHash(await this.app.vault.read(file));
         const savedHash = this.settings.postHashes[file.path];
 
         if (!savedHash) {
-            return 'unpublished';
+            return 'draft';
         }
 
         return currentHash === savedHash ? 'published' : 'unsynced';

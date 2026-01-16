@@ -98,7 +98,7 @@ export class HexoManagementView extends ItemView {
             if (this.plugin.syncService.isHexoFormat(file)) {
                 const status = await this.plugin.syncService.getSyncStatus(file);
                 if (status === 'unsynced') unsynced.push(file);
-                else if (status === 'unpublished') drafts.push(file);
+                else if (status === 'draft') drafts.push(file);
                 else if (status === 'published') published.push(file);
             }
         }

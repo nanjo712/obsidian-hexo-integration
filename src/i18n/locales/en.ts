@@ -37,7 +37,7 @@ export default {
     SETTINGS_SELECT_HASH: "Short hash",
     SETTINGS_SELECT_MANUAL: "Always manual",
     SETTINGS_SELECT_HEXO_TAG: "Hexo tag",
-    SETTINGS_SELECT_MARKDOWN_TAG: "Native markdown",
+    SETTINGS_SELECT_MARKDOWN_TAG: "Markdown tag",
 
     // Commands
     COMMAND_PUBLISH_POST: "Publish current post",
@@ -82,7 +82,7 @@ export default {
     NOTICE_DEPLOY_SUCCESS: "Site deployed successfully.",
 
     // Modals
-    MODAL_CLEANUP_TITLE: "Unused Assets Cleanup",
+    MODAL_CLEANUP_TITLE: "Unused assets cleanup",
     MODAL_CLEANUP_EMPTY: "No unused images found.",
     MODAL_CLEANUP_CONFIRM: "Found {{count}} unused images. Are you sure you want to delete them?",
     MODAL_BUTTON_CANCEL: "Cancel",

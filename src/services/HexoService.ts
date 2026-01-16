@@ -1,13 +1,15 @@
-import { spawn } from 'child_process';
+import { spawn, ChildProcess } from 'child_process';
 import { App, Notice } from 'obsidian';
 import { HexoIntegrationSettings } from '../settings';
 import { ExecutionModal } from '../modals/ExecutionModal';
 import { t } from '../i18n/helpers';
 
 export class HexoService {
+    private serverProcess: ChildProcess | null = null;
+
     constructor(private app: App, private settings: HexoIntegrationSettings) { }
 
-    private runHexoCommand(command: string, args: string[], successMessage: string) {
+    private runHexoCommand(command: string, args: string[], successMessage: string, isServer = false) {
         if (!this.settings.hexoRoot) {
             new Notice(t('NOTICE_HEXO_ROOT_NOT_SET'));
             return;
@@ -22,6 +24,10 @@ export class HexoService {
         }
 
         const child = spawn(command, args, { cwd: this.settings.hexoRoot, shell: true });
+
+        if (isServer) {
+            this.serverProcess = child;
+        }
 
         if (modal) {
             modal.onAbort = () => {
@@ -38,6 +44,12 @@ export class HexoService {
             const output = data.toString();
             console.debug(`stdout: ${output}`);
             if (modal) modal.appendLog(output);
+
+            if (isServer && modal && output.includes('http://localhost:')) {
+                setTimeout(() => {
+                    if (modal) modal.close();
+                }, 1500);
+            }
         });
 
         child.stderr.on('data', (data: { toString: () => string }) => {
@@ -53,6 +65,9 @@ export class HexoService {
                 new Notice(t('NOTICE_HEXO_FAILED', { code: String(code) }));
             }
             if (modal) modal.setFinished();
+            if (isServer) {
+                this.serverProcess = null;
+            }
         });
 
         child.on('error', (err) => {
@@ -69,8 +84,28 @@ export class HexoService {
     }
 
     hexoServer() {
+        if (this.serverProcess) {
+            new Notice(t('NOTICE_SERVER_ALREADY_RUNNING'));
+            return;
+        }
         const port = this.settings.serverPort || 4000;
-        this.runHexoCommand('hexo', ['server', '-p', String(port)], t('NOTICE_SERVER_STARTED', { port: String(port) }));
+        this.runHexoCommand('hexo', ['server', '-p', String(port)], t('NOTICE_SERVER_STARTED', { port: String(port) }), true);
+    }
+
+    stopServer() {
+        if (this.serverProcess) {
+            if (window.process.platform === 'win32') {
+                spawn('taskkill', ['/F', '/T', '/PID', this.serverProcess.pid?.toString() || ''], { shell: true });
+            } else {
+                this.serverProcess.kill('SIGINT');
+            }
+            this.serverProcess = null;
+            new Notice(t('NOTICE_SERVER_STOPPED'));
+        }
+    }
+
+    isServerRunning(): boolean {
+        return this.serverProcess !== null;
     }
 
     hexoDeploy() {

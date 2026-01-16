@@ -18,6 +18,8 @@ export default {
     SETTINGS_COMPRESS_IMAGES_DESC: "发布时自动将图片转换并压缩为 WebP 格式。",
     SETTINGS_WEBP_QUALITY: "WebP 质量指数",
     SETTINGS_WEBP_QUALITY_DESC: "WebP 的压缩质量 (0-100)。",
+    SETTINGS_ALWAYS_KEEP_SERVER_RUNNING: "始终保持 Hexo 服务器运行",
+    SETTINGS_ALWAYS_KEEP_SERVER_RUNNING_DESC: "Obsidian 启动时自动启动 Hexo 服务器并保持后台运行。",
 
     // 设置分组标题及子设置
     SETTINGS_HEADER_IMAGE_OPTIMIZATION: "图片优化",
@@ -46,6 +48,7 @@ export default {
     COMMAND_DEPLOY: "部署 Hexo 页面",
     COMMAND_CLEAN_ACTIVE: "清理当前文章的冗余资源",
     COMMAND_CLEAN_ALL: "清理所有文章的冗余资源",
+    COMMAND_STOP_SERVER: "停止 Hexo 服务器",
     COMMAND_OPEN_VIEW: "打开 Hexo 管理视图",
     COMMAND_GEN_PERMALINK: "生成 Permalink",
     COMMAND_CONVERT: "将当前文件转换为 Hexo 格式",
@@ -79,6 +82,8 @@ export default {
     NOTICE_HEXO_START_ERROR: "无法启动 Hexo 命令：{{message}}",
     NOTICE_GENERATE_SUCCESS: "Hexo: 站点生成完毕。",
     NOTICE_SERVER_STARTED: "Hexo: 预览服务器已启动，地址 http://localhost:{{port}}",
+    NOTICE_SERVER_STOPPED: "Hexo 服务器已停止。",
+    NOTICE_SERVER_ALREADY_RUNNING: "Hexo 服务器已经在运行。",
     NOTICE_DEPLOY_SUCCESS: "Hexo: 站点部署成功。",
 
     // 弹窗

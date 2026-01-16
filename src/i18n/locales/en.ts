@@ -18,6 +18,8 @@ export default {
     SETTINGS_COMPRESS_IMAGES_DESC: "Automatically convert and compress images to WebP format when publishing.",
     SETTINGS_WEBP_QUALITY: "WebP quality",
     SETTINGS_WEBP_QUALITY_DESC: "Compression quality for WebP (0-100).",
+    SETTINGS_ALWAYS_KEEP_SERVER_RUNNING: "Always keep hexo server running",
+    SETTINGS_ALWAYS_KEEP_SERVER_RUNNING_DESC: "Automatically start the hexo server when Obsidian starts and keep it running in the background.",
 
     // Settings Headers & Sub-settings
     SETTINGS_HEADER_IMAGE_OPTIMIZATION: "Image optimization",
@@ -46,6 +48,7 @@ export default {
     COMMAND_DEPLOY: "Deploy hexo pages",
     COMMAND_CLEAN_ACTIVE: "Cleanup unused assets for current post",
     COMMAND_CLEAN_ALL: "Cleanup unused assets for all posts",
+    COMMAND_STOP_SERVER: "Stop hexo server",
     COMMAND_OPEN_VIEW: "Open hexo management view",
     COMMAND_GEN_PERMALINK: "Generate permalink",
     COMMAND_CONVERT: "Convert current file to hexo format",
@@ -79,6 +82,8 @@ export default {
     NOTICE_HEXO_START_ERROR: "Error starting hexo command: {{message}}",
     NOTICE_GENERATE_SUCCESS: "Site generated successfully.",
     NOTICE_SERVER_STARTED: "Server started at http://localhost:{{port}}",
+    NOTICE_SERVER_STOPPED: "Hexo server stopped.",
+    NOTICE_SERVER_ALREADY_RUNNING: "Hexo server is already running.",
     NOTICE_DEPLOY_SUCCESS: "Site deployed successfully.",
 
     // Modals

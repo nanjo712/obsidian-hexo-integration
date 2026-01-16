@@ -58,6 +58,11 @@ export default class HexoIntegration extends Plugin {
         // Start File Watcher
         this.fileWatcherService.start();
 
+        // Auto-start Hexo Server if enabled
+        if (this.settings.alwaysKeepServerRunning) {
+            this.hexoService.hexoServer();
+        }
+
         this.addRibbonIcon('hexo-logo', t('RIBBON_TOOLTIP'), (evt: MouseEvent) => {
             new HexoCommandModal(this.app, this).open();
         });
@@ -97,6 +102,21 @@ export default class HexoIntegration extends Plugin {
             id: 'hexo-server',
             name: t('COMMAND_SERVER'),
             callback: () => { void this.hexoService.hexoServer(); }
+        });
+
+        this.addCommand({
+            id: 'stop-hexo-server',
+            name: t('COMMAND_STOP_SERVER'),
+            checkCallback: (checking: boolean) => {
+                const isRunning = this.hexoService.isServerRunning();
+                if (checking) {
+                    return isRunning;
+                }
+                if (isRunning) {
+                    this.hexoService.stopServer();
+                }
+                return true;
+            }
         });
 
         this.addCommand({
@@ -175,6 +195,7 @@ export default class HexoIntegration extends Plugin {
 
     onunload() {
         this.fileWatcherService.stop();
+        this.hexoService.stopServer();
     }
 
     async updateStatusBar() {
@@ -302,6 +323,10 @@ class HexoCommandModal extends SuggestModal<HexoCommand> {
                 callback: () => this.plugin.hexoService.hexoServer()
             },
             {
+                label: t('COMMAND_STOP_SERVER'),
+                callback: () => this.plugin.hexoService.stopServer()
+            },
+            {
                 label: t('COMMAND_DEPLOY'),
                 callback: () => this.plugin.hexoService.hexoDeploy()
             },
@@ -342,7 +367,14 @@ class HexoCommandModal extends SuggestModal<HexoCommand> {
             }
         ];
 
-        return commands.filter(command =>
+        const filteredCommands = commands.filter(cmd => {
+            if (cmd.label === t('COMMAND_STOP_SERVER')) {
+                return this.plugin.hexoService.isServerRunning();
+            }
+            return true;
+        });
+
+        return filteredCommands.filter(command =>
             command.label.toLowerCase().includes(query.toLowerCase())
         );
     }

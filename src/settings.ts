@@ -18,6 +18,7 @@ export interface HexoIntegrationSettings {
     serverPort: number;
     compressImages: boolean;
     webpQuality: number;
+    alwaysKeepServerRunning: boolean;
 }
 
 export const DEFAULT_SETTINGS: HexoIntegrationSettings = {
@@ -35,7 +36,8 @@ export const DEFAULT_SETTINGS: HexoIntegrationSettings = {
     autoExcerpt: false,
     serverPort: 4000,
     compressImages: false,
-    webpQuality: 75
+    webpQuality: 75,
+    alwaysKeepServerRunning: false
 }
 
 export class HexoIntegrationSettingTab extends PluginSettingTab {
@@ -134,6 +136,16 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                         this.plugin.settings.serverPort = num;
                         await this.plugin.saveSettings();
                     }
+                }));
+
+        new Setting(containerEl)
+            .setName(t('SETTINGS_ALWAYS_KEEP_SERVER_RUNNING'))
+            .setDesc(t('SETTINGS_ALWAYS_KEEP_SERVER_RUNNING_DESC'))
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.alwaysKeepServerRunning)
+                .onChange(async (value) => {
+                    this.plugin.settings.alwaysKeepServerRunning = value;
+                    await this.plugin.saveSettings();
                 }));
 
         new Setting(containerEl).setHeading().setName(t('SETTINGS_HEADER_IMAGE_OPTIMIZATION'));

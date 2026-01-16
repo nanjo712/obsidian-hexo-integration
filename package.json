@@ -1,6 +1,6 @@
 {
     "name": "obsidian-hexo-integration",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "Seamlessly manage, preview, and publish posts to your Hexo blog directly from Obsidian. Includes auto-formatting, image compression, and command execution.",
     "main": "main.js",
     "type": "module",

@@ -58,10 +58,10 @@ export class AssetCleanupModal extends Modal {
             .addButton(btn => btn
                 .setButtonText(t('MODAL_BUTTON_DELETE_ALL'))
                 .setWarning()
-                .onClick(async () => {
+                .onClick(() => {
                     btn.setDisabled(true);
                     btn.setButtonText(t('MODAL_BUTTON_DELETING'));
-                    await this.onConfirm();
+                    this.onConfirm();
                     this.close();
                 }));
     }

@@ -1,11 +1,11 @@
 {
-    "id": "hexo-integration",
-    "name": "Hexo Integration",
-    "version": "1.0.0",
-    "minAppVersion": "1.11.4",
-    "description": "Seamlessly manage, preview, and publish posts to your Hexo blog directly. Includes auto-formatting, image compression, and command execution.",
-    "author": "nanjo712",
-    "authorUrl": "https://github.com/nanjo712",
-    "fundingUrl": "https://github.com/sponsors/nanjo712",
-    "isDesktopOnly": true
+	"id": "hexo-integration",
+	"name": "Hexo Integration",
+	"version": "1.0.1",
+	"minAppVersion": "1.11.4",
+	"description": "Seamlessly manage, preview, and publish posts to your Hexo blog directly. Includes auto-formatting, image compression, and command execution.",
+	"author": "nanjo712",
+	"authorUrl": "https://github.com/nanjo712",
+	"fundingUrl": "https://github.com/sponsors/nanjo712",
+	"isDesktopOnly": true
 }

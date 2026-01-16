@@ -45,6 +45,17 @@ export class ImageService {
             }
         }
 
+        // 3. Handle external images: ![alt](http...)
+        const externalMdRegex = /!\[(.*?)\]\((https?:\/\/.*?)(\s+"(.*?)"|)\)/g;
+        updatedContent = updatedContent.replace(externalMdRegex, (_match, altText: string, url: string, _p3, titleText: string | undefined) => {
+            if (this.settings.imageSyntax === 'hexo') {
+                const finalAlt = altText || "";
+                const finalTitle = titleText || "";
+                return `{% img ${url} '"${finalTitle}" "${finalAlt}"' %}`;
+            }
+            return _match; // Keep as is for 'markdown' syntax
+        });
+
         return updatedContent;
     }
 

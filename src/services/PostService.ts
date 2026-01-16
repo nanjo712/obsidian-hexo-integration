@@ -21,22 +21,6 @@ export class PostService {
         private filenameService: FilenameService
     ) { }
 
-    async createHexoPost() {
-        const template = `---
-title: 
-permalink: 
-date: ${this.getFormattedDate()}
-tags: 
-published: false
----
-
-# 
-`;
-        const file = await this.app.vault.create(`${this.getFormattedDate()}-new-post.md`, template);
-        const leaf = this.app.workspace.getLeaf(false);
-        await leaf.openFile(file);
-    }
-
     private getFormattedDate(): string {
         const now = new Date();
         const year = now.getFullYear();

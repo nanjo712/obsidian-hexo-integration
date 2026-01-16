@@ -63,12 +63,6 @@ export default class HexoIntegration extends Plugin {
         });
 
         this.addCommand({
-            id: 'create-hexo-post',
-            name: t('COMMAND_CREATE_POST'),
-            callback: () => { void this.postService.createHexoPost(); }
-        });
-
-        this.addCommand({
             id: 'convert-to-hexo',
             name: t('COMMAND_CONVERT'),
             callback: () => {
@@ -321,10 +315,6 @@ class HexoCommandModal extends SuggestModal<HexoCommand> {
                         }
                     })();
                 }
-            },
-            {
-                label: t('COMMAND_CREATE_POST'),
-                callback: () => { void this.plugin.postService.createHexoPost(); }
             },
             {
                 label: t('COMMAND_CONVERT'),

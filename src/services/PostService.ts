@@ -158,7 +158,7 @@ published: false
             }
 
             content = await this.imageService.processImages(file, content, processedFiles);
-            content = await this.linkService.transformLinks(content, file);
+            content = this.linkService.transformLinks(content, file);
 
             if (this.settings.autoExcerpt && !/<!--\s*more\s*-->/.test(content)) {
                 content = this.applyAutoExcerpt(content);
@@ -176,7 +176,7 @@ published: false
         }
     }
 
-    async syncRename(file: TFile, oldPath: string) {
+    syncRename(file: TFile, oldPath: string) {
         if (!this.settings.hexoRoot) return;
 
         const oldHash = this.settings.postHashes[oldPath];
@@ -222,7 +222,7 @@ published: false
             return;
         }
 
-        const unused = await this.imageService.getUnusedImages(file);
+        const unused = this.imageService.getUnusedImages(file);
         const assetDir = this.imageService.getAssetFolderPath(file);
 
         if (unused.length === 0 || !assetDir) {
@@ -236,7 +236,7 @@ published: false
             noteTitle: file.basename
         }));
 
-        new AssetCleanupModal(this.app, items, async () => {
+        new AssetCleanupModal(this.app, items, () => {
             items.forEach(item => fs.unlinkSync(item.filePath));
             new Notice(t('NOTICE_DELETE_ASSETS_SUCCESS', { count: String(items.length), fileName: file.basename }));
         }).open();
@@ -250,7 +250,7 @@ published: false
 
         for (const file of files) {
             if (this.syncService.isHexoFormat(file)) {
-                const unused = await this.imageService.getUnusedImages(file);
+                const unused = this.imageService.getUnusedImages(file);
                 const assetDir = this.imageService.getAssetFolderPath(file);
                 if (assetDir && unused.length > 0) {
                     allUnused = allUnused.concat(unused.map((name: string) => ({
@@ -267,7 +267,7 @@ published: false
             return;
         }
 
-        new AssetCleanupModal(this.app, allUnused, async () => {
+        new AssetCleanupModal(this.app, allUnused, () => {
             allUnused.forEach(item => fs.unlinkSync(item.filePath));
             new Notice(t('NOTICE_CLEANUP_COMPLETED', { count: String(allUnused.length) }));
         }).open();

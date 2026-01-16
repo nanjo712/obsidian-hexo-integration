@@ -145,12 +145,14 @@ export class HexoManagementView extends ItemView {
                 const cardFooter = card.createDiv({ cls: "hexo-post-card-footer" });
                 const publishBtn = cardFooter.createEl("button", { text: t('DASHBOARD_PUBLISH_BUTTON'), cls: "mod-small" });
                 setIcon(publishBtn, "upload");
-                publishBtn.onclick = async (e) => {
+                publishBtn.onclick = (e) => {
                     e.stopPropagation();
-                    void this.plugin.postService.publishPost(file, async () => {
+                    this.plugin.postService.publishPost(file, async () => {
                         await this.plugin.saveSettings();
                         await this.plugin.updateStatusBar();
                         await this.render();
+                    }).catch((err) => {
+                        console.error(`Failed to publish ${file.path}:`, err);
                     });
                 };
             }

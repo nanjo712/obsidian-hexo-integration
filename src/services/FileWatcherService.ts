@@ -13,7 +13,7 @@ export class FileWatcherService {
         private updateStatusBar: () => void
     ) { }
 
-    async start() {
+    start() {
         this.stop();
 
         if (!this.settings.hexoRoot) return;

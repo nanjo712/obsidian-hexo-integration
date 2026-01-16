@@ -3,7 +3,7 @@ import { App, TFile } from 'obsidian';
 export class LinkService {
     constructor(private app: App) { }
 
-    async transformLinks(content: string, sourceFile: TFile): Promise<string> {
+    transformLinks(content: string, sourceFile: TFile): string {
         const linkRegex = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
 
         const matches = Array.from(content.matchAll(linkRegex));

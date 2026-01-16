@@ -43,18 +43,20 @@ export default class HexoIntegration extends Plugin {
         this.statusBarItemEl.addClass('mod-clickable');
         this.statusBarItemEl.setAttribute('aria-label', t('STATUS_BAR_PUBLISH'));
 
-        this.statusBarItemEl.onClickEvent(async () => {
+        this.statusBarItemEl.onClickEvent(() => {
             const activeFile = this.app.workspace.getActiveFile();
             if (activeFile) {
-                void this.postService.publishPost(activeFile, async () => {
+                this.postService.publishPost(activeFile, async () => {
                     await this.saveSettings();
                     await this.updateStatusBar();
+                }).catch((err) => {
+                    console.error(`Failed to publish ${activeFile.path}:`, err);
                 });
             }
         });
 
         // Start File Watcher
-        await this.fileWatcherService.start();
+        this.fileWatcherService.start();
 
         this.addRibbonIcon('hexo-logo', t('RIBBON_TOOLTIP'), (evt: MouseEvent) => {
             new HexoCommandModal(this.app, this).open();
@@ -78,12 +80,14 @@ export default class HexoIntegration extends Plugin {
         this.addCommand({
             id: 'publish-hexo-post',
             name: t('COMMAND_PUBLISH_POST'),
-            callback: async () => {
+            callback: () => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) {
-                    void this.postService.publishPost(activeFile, async () => {
+                    this.postService.publishPost(activeFile, async () => {
                         await this.saveSettings();
                         await this.updateStatusBar();
+                    }).catch((err) => {
+                        console.error(`Failed to publish ${activeFile.path}:`, err);
                     });
                 }
             }
@@ -158,7 +162,7 @@ export default class HexoIntegration extends Plugin {
         this.registerEvent(this.app.vault.on('rename', (file, oldPath) => {
             if (file instanceof TFile) {
                 void (async () => {
-                    await this.postService.syncRename(file, oldPath);
+                    this.postService.syncRename(file, oldPath);
                     await this.saveSettings();
                     await this.updateStatusBar();
                 })();
@@ -276,9 +280,11 @@ class HexoCommandModal extends SuggestModal<HexoCommand> {
                 callback: () => {
                     const activeFile = this.app.workspace.getActiveFile();
                     if (activeFile) {
-                        void this.plugin.postService.publishPost(activeFile, async () => {
+                        this.plugin.postService.publishPost(activeFile, async () => {
                             await this.plugin.saveSettings();
                             await this.plugin.updateStatusBar();
+                        }).catch((err) => {
+                            console.error(`Failed to publish ${activeFile.path}:`, err);
                         });
                     }
                 }

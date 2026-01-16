@@ -2,6 +2,7 @@ import { App, TFile } from 'obsidian';
 import { HexoIntegrationSettings } from '../settings';
 import * as fs from 'fs';
 import * as pathNode from 'path';
+import { Buffer } from 'buffer';
 
 export class ImageService {
     constructor(private app: App, private settings: HexoIntegrationSettings) { }
@@ -75,12 +76,10 @@ export class ImageService {
             if (this.settings.compressImages) {
                 const buffer = await this.app.vault.readBinary(linkedFile);
                 const compressed = await this.compressToWebP(buffer, this.settings.webpQuality / 100);
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-                fs.writeFileSync(targetPath, (window as any).Buffer.from(compressed));
+                fs.writeFileSync(targetPath, Buffer.from(compressed));
             } else {
                 const imageContent = await this.app.vault.readBinary(linkedFile);
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-                fs.writeFileSync(targetPath, (window as any).Buffer.from(imageContent));
+                fs.writeFileSync(targetPath, Buffer.from(imageContent));
             }
             processedFiles.add(finalName);
         }
@@ -134,7 +133,7 @@ export class ImageService {
         return pathNode.join(postsDir, assetFolderName);
     }
 
-    async getUnusedImages(file: TFile): Promise<string[]> {
+    getUnusedImages(file: TFile): string[] {
         const assetDir = this.getAssetFolderPath(file);
         if (!assetDir || !fs.existsSync(assetDir)) return [];
 

@@ -11,7 +11,7 @@ export class AssetCleanupModal extends Modal {
     constructor(
         app: App,
         private unusedAssets: UnusedAsset[],
-        private onConfirm: () => Promise<void>
+        private onConfirm: () => void
     ) {
         super(app);
     }

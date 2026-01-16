@@ -73,8 +73,9 @@ export class ExecutionModal extends Modal {
         if (type === 'stderr') {
             span.setCssProps({ 'color': 'var(--text-error)' });
         }
-        // eslint-disable-next-line @microsoft/sdl/no-inner-html
-        span.innerHTML = html;
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        span.append(...Array.from(doc.body.childNodes));
         this.logContainer.appendChild(span);
         this.logContainer.scrollTop = this.logContainer.scrollHeight;
     }

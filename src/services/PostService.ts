@@ -200,6 +200,13 @@ export class PostService {
         }
     }
 
+    syncDelete(path: string) {
+        if (this.settings.postHashes[path] || this.settings.pathMapping[path]) {
+            delete this.settings.postHashes[path];
+            delete this.settings.pathMapping[path];
+        }
+    }
+
     async cleanAssets(file: TFile) {
         if (!this.syncService.isHexoFile(file)) {
             new Notice(t('NOTICE_NOT_HEXO_FORMAT'));

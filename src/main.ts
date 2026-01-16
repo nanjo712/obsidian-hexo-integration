@@ -162,7 +162,13 @@ export default class HexoIntegration extends Plugin {
                 })();
             }
         }));
-        this.registerEvent(this.app.vault.on('delete', () => { void this.updateStatusBar(); }));
+        this.registerEvent(this.app.vault.on('delete', (file) => {
+            void (async () => {
+                this.postService.syncDelete(file.path);
+                await this.saveSettings();
+                await this.updateStatusBar();
+            })();
+        }));
 
         void this.updateStatusBar();
     }

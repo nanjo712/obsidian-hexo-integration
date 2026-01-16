@@ -20,6 +20,8 @@ export default {
     SETTINGS_WEBP_QUALITY_DESC: "WebP 的压缩质量 (0-100)。",
     SETTINGS_ALWAYS_KEEP_SERVER_RUNNING: "始终保持 Hexo 服务器运行",
     SETTINGS_ALWAYS_KEEP_SERVER_RUNNING_DESC: "Obsidian 启动时自动启动 Hexo 服务器并保持后台运行。",
+    SETTINGS_AUTO_GENERATE_AFTER_PUBLISH: "发布后自动生成站点",
+    SETTINGS_AUTO_GENERATE_AFTER_PUBLISH_DESC: "发布文章后自动运行 hexo generate（批量发布时仅在最后触发一次）。",
 
     // 设置分组标题及子设置
     SETTINGS_HEADER_IMAGE_OPTIMIZATION: "图片优化",

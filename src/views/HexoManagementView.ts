@@ -151,6 +151,9 @@ export class HexoManagementView extends ItemView {
                         await this.plugin.saveSettings();
                         await this.plugin.updateStatusBar();
                         await this.render();
+                        if (this.plugin.settings.autoGenerateAfterPublish) {
+                            this.plugin.hexoService.hexoGenerate(true);
+                        }
                     }).catch((err) => {
                         console.error(`Failed to publish ${file.path}:`, err);
                     });
@@ -183,6 +186,10 @@ export class HexoManagementView extends ItemView {
         void this.plugin.updateStatusBar();
         void this.render();
         new Notice(t('NOTICE_BULK_PUBLISH_COMPLETED'));
+
+        if (this.plugin.settings.autoGenerateAfterPublish) {
+            this.plugin.hexoService.hexoGenerate(true);
+        }
     }
 
     async onClose() {

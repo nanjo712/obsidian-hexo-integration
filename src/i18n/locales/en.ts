@@ -20,6 +20,8 @@ export default {
     SETTINGS_WEBP_QUALITY_DESC: "Compression quality for WebP (0-100).",
     SETTINGS_ALWAYS_KEEP_SERVER_RUNNING: "Always keep hexo server running",
     SETTINGS_ALWAYS_KEEP_SERVER_RUNNING_DESC: "Automatically start the hexo server when Obsidian starts and keep it running in the background.",
+    SETTINGS_AUTO_GENERATE_AFTER_PUBLISH: "Auto generate after publish",
+    SETTINGS_AUTO_GENERATE_AFTER_PUBLISH_DESC: "Automatically run hexo generate after publishing posts (bulk publish will only trigger once at the end).",
 
     // Settings Headers & Sub-settings
     SETTINGS_HEADER_IMAGE_OPTIMIZATION: "Image optimization",

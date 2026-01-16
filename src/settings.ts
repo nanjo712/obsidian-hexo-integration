@@ -19,6 +19,7 @@ export interface HexoIntegrationSettings {
     compressImages: boolean;
     webpQuality: number;
     alwaysKeepServerRunning: boolean;
+    autoGenerateAfterPublish: boolean;
 }
 
 export const DEFAULT_SETTINGS: HexoIntegrationSettings = {
@@ -37,7 +38,8 @@ export const DEFAULT_SETTINGS: HexoIntegrationSettings = {
     serverPort: 4000,
     compressImages: false,
     webpQuality: 75,
-    alwaysKeepServerRunning: false
+    alwaysKeepServerRunning: false,
+    autoGenerateAfterPublish: false
 }
 
 export class HexoIntegrationSettingTab extends PluginSettingTab {
@@ -145,6 +147,16 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.alwaysKeepServerRunning)
                 .onChange(async (value) => {
                     this.plugin.settings.alwaysKeepServerRunning = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName(t('SETTINGS_AUTO_GENERATE_AFTER_PUBLISH'))
+            .setDesc(t('SETTINGS_AUTO_GENERATE_AFTER_PUBLISH_DESC'))
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.autoGenerateAfterPublish)
+                .onChange(async (value) => {
+                    this.plugin.settings.autoGenerateAfterPublish = value;
                     await this.plugin.saveSettings();
                 }));
 

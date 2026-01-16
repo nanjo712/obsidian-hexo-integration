@@ -9,7 +9,7 @@ export class HexoService {
 
     constructor(private app: App, private settings: HexoIntegrationSettings) { }
 
-    private runHexoCommand(command: string, args: string[], successMessage: string, isServer = false) {
+    private runHexoCommand(command: string, args: string[], successMessage: string, isServer = false, autoCloseOnSuccess = false) {
         if (!this.settings.hexoRoot) {
             new Notice(t('NOTICE_HEXO_ROOT_NOT_SET'));
             return;
@@ -61,10 +61,14 @@ export class HexoService {
         child.on('close', (code) => {
             if (code === 0) {
                 new Notice(successMessage);
+                if (autoCloseOnSuccess && modal) {
+                    modal.setFinished();
+                    setTimeout(() => modal?.close(), 1000);
+                }
             } else {
                 new Notice(t('NOTICE_HEXO_FAILED', { code: String(code) }));
             }
-            if (modal) modal.setFinished();
+            if (modal && (!autoCloseOnSuccess || code !== 0)) modal.setFinished();
             if (isServer) {
                 this.serverProcess = null;
             }
@@ -79,8 +83,8 @@ export class HexoService {
         });
     }
 
-    hexoGenerate() {
-        this.runHexoCommand('hexo', ['generate'], t('NOTICE_GENERATE_SUCCESS'));
+    hexoGenerate(isAuto = false) {
+        this.runHexoCommand('hexo', ['generate'], t('NOTICE_GENERATE_SUCCESS'), false, isAuto);
     }
 
     hexoServer() {

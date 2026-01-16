@@ -49,6 +49,9 @@ export default class HexoIntegration extends Plugin {
                 this.postService.publishPost(activeFile, async () => {
                     await this.saveSettings();
                     await this.updateStatusBar();
+                    if (this.settings.autoGenerateAfterPublish) {
+                        this.hexoService.hexoGenerate(true);
+                    }
                 }).catch((err) => {
                     console.error(`Failed to publish ${activeFile.path}:`, err);
                 });
@@ -85,6 +88,9 @@ export default class HexoIntegration extends Plugin {
                     this.postService.publishPost(activeFile, async () => {
                         await this.saveSettings();
                         await this.updateStatusBar();
+                        if (this.settings.autoGenerateAfterPublish) {
+                            this.hexoService.hexoGenerate(true);
+                        }
                     }).catch((err) => {
                         console.error(`Failed to publish ${activeFile.path}:`, err);
                     });
@@ -304,6 +310,9 @@ class HexoCommandModal extends SuggestModal<HexoCommand> {
                         this.plugin.postService.publishPost(activeFile, async () => {
                             await this.plugin.saveSettings();
                             await this.plugin.updateStatusBar();
+                            if (this.plugin.settings.autoGenerateAfterPublish) {
+                                this.plugin.hexoService.hexoGenerate(true);
+                            }
                         }).catch((err) => {
                             console.error(`Failed to publish ${activeFile.path}:`, err);
                         });

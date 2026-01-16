@@ -15,7 +15,7 @@ export class PermalinkService {
 
     async generatePermalink(text: string): Promise<string> {
         let result = "";
-        switch (this.settings.slugStyle) {
+        switch (this.settings.permalinkStyle) {
             case 'hash': {
                 const hash = await this.computeHash(text);
                 result = hash.substring(0, 8);
@@ -87,8 +87,8 @@ export class PermalinkService {
             words = words.filter(w => !stopWords.has(w));
         }
 
-        if (this.settings.maxSlugWords > 0) {
-            words = words.slice(0, this.settings.maxSlugWords);
+        if (this.settings.maxPermalinkWords > 0) {
+            words = words.slice(0, this.settings.maxPermalinkWords);
         }
 
         return words.join('-') || 'post';

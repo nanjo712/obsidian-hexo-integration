@@ -5,11 +5,11 @@ import { t } from "./i18n/helpers";
 export interface HexoIntegrationSettings {
     hexoRoot: string;
     postHashes: Record<string, string>;
-    slugStyle: 'translate' | 'pinyin' | 'hash' | 'manual' | 'title';
+    permalinkStyle: 'translate' | 'pinyin' | 'hash' | 'manual' | 'title';
     baiduAppId: string;
     baiduApiKey: string;
     removeStopWords: boolean;
-    maxSlugWords: number;
+    maxPermalinkWords: number;
     imageSyntax: 'hexo' | 'markdown';
     coverFieldName: string;
     showOutputModal: boolean;
@@ -23,11 +23,11 @@ export interface HexoIntegrationSettings {
 export const DEFAULT_SETTINGS: HexoIntegrationSettings = {
     hexoRoot: '',
     postHashes: {},
-    slugStyle: 'hash',
+    permalinkStyle: 'hash',
     baiduAppId: '',
     baiduApiKey: '',
     removeStopWords: true,
-    maxSlugWords: 5,
+    maxPermalinkWords: 5,
     imageSyntax: 'hexo',
     coverFieldName: 'cover',
     showOutputModal: true,
@@ -72,9 +72,9 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                 .addOption('pinyin', t('SETTINGS_SELECT_PINYIN'))
                 .addOption('hash', t('SETTINGS_SELECT_HASH'))
                 .addOption('manual', t('SETTINGS_SELECT_MANUAL'))
-                .setValue(this.plugin.settings.slugStyle)
+                .setValue(this.plugin.settings.permalinkStyle)
                 .onChange(async (value: 'translate' | 'pinyin' | 'hash' | 'manual' | 'title') => {
-                    this.plugin.settings.slugStyle = value;
+                    this.plugin.settings.permalinkStyle = value;
                     await this.plugin.saveSettings();
                     this.display(); // Refresh to show/hide relevant settings
                 }));
@@ -163,7 +163,7 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                     }));
         }
 
-        if (this.plugin.settings.slugStyle === 'translate') {
+        if (this.plugin.settings.permalinkStyle === 'translate') {
             new Setting(containerEl).setHeading().setName(t('SETTINGS_HEADER_BAIDU_TRANSLATE'));
 
             new Setting(containerEl)
@@ -185,7 +185,7 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                     }));
         }
 
-        if (this.plugin.settings.slugStyle === 'translate' || this.plugin.settings.slugStyle === 'title') {
+        if (this.plugin.settings.permalinkStyle === 'translate' || this.plugin.settings.permalinkStyle === 'title') {
             new Setting(containerEl).setHeading().setName(t('SETTINGS_HEADER_PERMALINK_POST_PROCESSING'));
 
             new Setting(containerEl)
@@ -202,11 +202,11 @@ export class HexoIntegrationSettingTab extends PluginSettingTab {
                 .setName(t('SETTINGS_MAX_PERMALINK_WORDS'))
                 .setDesc(t('SETTINGS_MAX_PERMALINK_WORDS_DESC'))
                 .addText(text => text
-                    .setValue(String(this.plugin.settings.maxSlugWords))
+                    .setValue(String(this.plugin.settings.maxPermalinkWords))
                     .onChange(async (value) => {
                         const num = parseInt(value);
                         if (!isNaN(num)) {
-                            this.plugin.settings.maxSlugWords = num;
+                            this.plugin.settings.maxPermalinkWords = num;
                             await this.plugin.saveSettings();
                         }
                     }));

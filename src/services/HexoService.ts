@@ -6,6 +6,7 @@ import { t } from '../i18n/helpers';
 
 export class HexoService {
     private serverProcess: ChildProcess | null = null;
+    private isStoppingServer = false;
 
     constructor(private app: App, private settings: HexoIntegrationSettings) { }
 
@@ -66,11 +67,16 @@ export class HexoService {
                     setTimeout(() => modal?.close(), 1000);
                 }
             } else {
-                new Notice(t('NOTICE_HEXO_FAILED', { code: String(code) }));
+                // Suppress error notice for server processes that are intentionally stopped or common exit codes
+                const isExpectedServerStop = isServer && (this.isStoppingServer || code === 1 || code === null);
+                if (!isExpectedServerStop) {
+                    new Notice(t('NOTICE_HEXO_FAILED', { code: String(code) }));
+                }
             }
             if (modal && (!autoCloseOnSuccess || code !== 0)) modal.setFinished();
             if (isServer) {
                 this.serverProcess = null;
+                this.isStoppingServer = false;
             }
         });
 
@@ -98,6 +104,7 @@ export class HexoService {
 
     stopServer() {
         if (this.serverProcess) {
+            this.isStoppingServer = true;
             if (window.process.platform === 'win32') {
                 spawn('taskkill', ['/F', '/T', '/PID', this.serverProcess.pid?.toString() || ''], { shell: true });
             } else {
@@ -105,6 +112,8 @@ export class HexoService {
             }
             this.serverProcess = null;
             new Notice(t('NOTICE_SERVER_STOPPED'));
+            // Reset flag after a delay in case close event doesn't fire as expected
+            setTimeout(() => { this.isStoppingServer = false; }, 1000);
         }
     }
 

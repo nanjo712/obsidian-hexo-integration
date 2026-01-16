@@ -201,7 +201,7 @@ export class PostService {
     }
 
     async cleanAssets(file: TFile) {
-        if (!this.syncService.isHexoFormat(file)) {
+        if (!this.syncService.isHexoFile(file)) {
             new Notice(t('NOTICE_NOT_HEXO_FORMAT'));
             return;
         }
@@ -233,7 +233,7 @@ export class PostService {
         new Notice(t('NOTICE_SCANNING_ASSETS'));
 
         for (const file of files) {
-            if (this.syncService.isHexoFormat(file)) {
+            if (this.syncService.isHexoFile(file)) {
                 const unused = this.imageService.getUnusedImages(file);
                 const assetDir = this.imageService.getAssetFolderPath(file);
                 if (assetDir && unused.length > 0) {

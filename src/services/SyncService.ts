@@ -11,7 +11,7 @@ export class SyncService {
         return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    isHexoFormat(file: TFile): boolean {
+    isHexoFile(file: TFile): boolean {
         const cache = this.app.metadataCache.getFileCache(file);
         const frontmatter = cache?.frontmatter;
         return !!(frontmatter && 'published' in frontmatter);

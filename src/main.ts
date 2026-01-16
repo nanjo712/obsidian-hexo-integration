@@ -173,7 +173,7 @@ export default class HexoIntegration extends Plugin {
 
     async updateStatusBar() {
         const file = this.app.workspace.getActiveFile();
-        if (!file || file.extension !== 'md' || !this.syncService.isHexoFormat(file)) {
+        if (!file || file.extension !== 'md' || !this.syncService.isHexoFile(file)) {
             this.statusBarItemEl.empty();
             this.statusBarItemEl.setCssProps({ 'display': 'none' });
             return;

@@ -95,7 +95,7 @@ export class HexoManagementView extends ItemView {
 
         const files = this.app.vault.getMarkdownFiles();
         for (const file of files) {
-            if (this.plugin.syncService.isHexoFormat(file)) {
+            if (this.plugin.syncService.isHexoFile(file)) {
                 const status = await this.plugin.syncService.getSyncStatus(file);
                 if (status === 'unsynced') unsynced.push(file);
                 else if (status === 'draft') drafts.push(file);

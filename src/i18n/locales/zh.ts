@@ -40,7 +40,6 @@ export default {
     SETTINGS_SELECT_MARKDOWN_TAG: "标准 Markdown (![]())",
 
     // 命令
-    COMMAND_CREATE_POST: "创建新的 Hexo 文章",
     COMMAND_PUBLISH_POST: "发布当前文章",
     COMMAND_GENERATE: "生成 Hexo 页面",
     COMMAND_SERVER: "启动 Hexo 服务器",

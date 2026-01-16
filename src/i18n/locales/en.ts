@@ -40,7 +40,6 @@ export default {
     SETTINGS_SELECT_MARKDOWN_TAG: "Native markdown",
 
     // Commands
-    COMMAND_CREATE_POST: "Create new hexo post",
     COMMAND_PUBLISH_POST: "Publish current post",
     COMMAND_GENERATE: "Generate hexo pages",
     COMMAND_SERVER: "Start hexo server",
